@@ -144,3 +144,10 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API REST para la tienda en línea Studio SD',
     'VERSION': '1.0.0',
 }
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
