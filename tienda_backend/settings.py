@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'catalogo',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -137,8 +138,11 @@ MAILERS = {
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
 }
-
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Tienda Studio SD API',
     'DESCRIPTION': 'API REST para la tienda en línea Studio SD',
