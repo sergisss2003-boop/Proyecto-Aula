@@ -4,6 +4,7 @@ import Checkout from './Checkout'
 import Admin from './Admin'
 import Login from './Login'
 import Producto, { tallasDe } from './Producto'
+import Info from './Info'
 import './App.css'
 
 const API_URL = 'http://127.0.0.1:8000/api'
@@ -66,12 +67,29 @@ function App() {
   // El panel solo se muestra si hay una sesión de administrador iniciada
   const coincideProducto = hash.match(/^#\/producto\/(\d+)$/)
   const productoId = coincideProducto ? Number(coincideProducto[1]) : null
-  const vista = hash === '#/admin' && sesion ? 'admin' : productoId ? 'producto' : 'tienda'
+  const coincideInfo = hash.match(/^#\/info\/([a-z-]+)$/)
+  const seccionInfo = coincideInfo ? coincideInfo[1] : null
+  const vista = hash === '#/admin' && sesion
+    ? 'admin'
+    : productoId ? 'producto' : seccionInfo ? 'info' : 'tienda'
 
-  // Al abrir un producto, la página vuelve arriba
+  // Al abrir un producto o una página de ayuda, la página vuelve arriba
   useEffect(() => {
-    if (productoId) window.scrollTo(0, 0)
-  }, [productoId])
+    if (productoId || seccionInfo) window.scrollTo(0, 0)
+  }, [productoId, seccionInfo])
+
+  // --- Boletín del pie de página ---
+  const [correoBoletin, setCorreoBoletin] = useState('')
+  const [mensajeBoletin, setMensajeBoletin] = useState(null)
+  const suscribirse = (e) => {
+    e.preventDefault()
+    if (!/^\S+@\S+\.\S+$/.test(correoBoletin.trim())) {
+      setMensajeBoletin({ ok: false, texto: 'Escribe un correo válido.' })
+      return
+    }
+    setMensajeBoletin({ ok: true, texto: '¡Listo! Ya eres parte de Studio SD.' })
+    setCorreoBoletin('')
+  }
 
   // Si alguien entra a #/admin sin haber iniciado sesión, se le pide el login
   useEffect(() => {
@@ -126,6 +144,17 @@ function App() {
   const productosFiltrados = textoBusqueda
     ? porCategoria.filter(p => quitarTildes(`${p.nombre} ${p.descripcion}`).includes(textoBusqueda))
     : porCategoria
+
+  // Imágenes de la portada: los productos más recientes que tengan foto
+  const conImagen = productosActivos.filter(p => p.imagen)
+  const destacados = [...conImagen].sort((a, b) => b.id - a.id).slice(0, 3)
+  const imagenDeCategoria = (catId) => conImagen.find(p => p.categoria === catId)?.imagen
+  const imagenBanner = conImagen.length ? conImagen[conImagen.length - 1].imagen : null
+
+  const elegirCategoria = (id) => {
+    setCategoriaSeleccionada(id)
+    setBusqueda('')
+  }
 
   // --- Carrito ---
   // Cada línea del carrito se identifica por producto + talla; el stock se comparte entre todas las tallas del producto
@@ -321,15 +350,85 @@ function App() {
             />
           )
         })()
+      ) : vista === 'info' ? (
+        <Info seccion={seccionInfo} />
       ) : (
       <>
       <header className="hero">
-        <h1>Nueva colección</h1>
-        <p>Ropa y accesorios con actitud, para cada estilo.</p>
-        <button className="hero-btn" onClick={irAlCatalogo}>Ver catálogo</button>
+        <div className="hero-inner">
+          <div className="hero-texto">
+            <span className="hero-etiqueta">Nueva colección</span>
+            <h1>Viste con actitud,<br />a tu manera.</h1>
+            <p>Ropa y accesorios para cada estilo. Descubre las últimas prendas que acaban de llegar a Studio SD.</p>
+            <div className="hero-botones">
+              <button className="hero-btn" onClick={irAlCatalogo}>Ver catálogo</button>
+              <a className="hero-btn-sec" href="#/info/envios-y-devoluciones">Envío gratis desde $300.000</a>
+            </div>
+          </div>
+          {destacados.length > 0 && (
+            <div className="hero-collage">
+              {destacados.map(prod => (
+                <a className="collage-card" key={prod.id} href={`#/producto/${prod.id}`}>
+                  <img src={prod.imagen} alt={prod.nombre} />
+                  <span className="collage-info">
+                    <strong>{prod.nombre}</strong>
+                    <small>{formatoPrecio(prod.precio)}</small>
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
 
+      <section className="beneficios">
+        <div className="beneficio">
+          <Icono><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.6" /><circle cx="17" cy="18" r="1.6" /></Icono>
+          <div><strong>Envío gratis</strong><span>En compras desde $300.000</span></div>
+        </div>
+        <div className="beneficio">
+          <Icono><path d="M4 12a8 8 0 0114-5.3L20 9" /><path d="M20 4v5h-5" /><path d="M20 12a8 8 0 01-14 5.3L4 15" /><path d="M4 20v-5h5" /></Icono>
+          <div><strong>Cambios en 30 días</strong><span>Sin complicaciones</span></div>
+        </div>
+        <div className="beneficio">
+          <Icono><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18" /></Icono>
+          <div><strong>Pago seguro</strong><span>Tarjeta crédito o débito</span></div>
+        </div>
+      </section>
+
+      {categorias.length > 0 && (
+        <section className="categorias-seccion">
+          <h2 className="titulo-seccion">Compra por categoría</h2>
+          <div className="categorias-tiles">
+            {categorias.map(cat => {
+              const img = imagenDeCategoria(cat.id)
+              return (
+                <a
+                  key={cat.id}
+                  href="#catalogo"
+                  className="tile"
+                  style={img ? { backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.05) 60%), url("${img}")` } : undefined}
+                  onClick={() => elegirCategoria(cat.id)}
+                >
+                  <span>{cat.nombre}</span>
+                  <small>Ver colección →</small>
+                </a>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
       <section id="catalogo" className="catalogo-section">
+        <h2 className="titulo-seccion">Catálogo</h2>
+        <div className="categorias">
+          <button className={categoriaSeleccionada === null ? 'activo' : ''} onClick={() => elegirCategoria(null)}>Todo</button>
+          {categorias.map(cat => (
+            <button key={cat.id} className={categoriaSeleccionada === cat.id ? 'activo' : ''} onClick={() => elegirCategoria(cat.id)}>
+              {cat.nombre}
+            </button>
+          ))}
+        </div>
         {textoBusqueda && (
           <p className="resultados">
             {productosFiltrados.length} resultado(s) para “{busqueda.trim()}”
@@ -375,6 +474,17 @@ function App() {
           </p>
         )}
       </section>
+
+      <section
+        className="banner-promo"
+        style={imagenBanner ? { backgroundImage: `linear-gradient(90deg, rgba(8,8,10,0.85), rgba(8,8,10,0.45)), url("${imagenBanner}")` } : undefined}
+      >
+        <div>
+          <h2>Tu próximo look empieza aquí</h2>
+          <p>Compra hoy y recibe envío gratis en pedidos desde $300.000.</p>
+        </div>
+        <button className="hero-btn" onClick={irAlCatalogo}>Comprar ahora</button>
+      </section>
       </>
       )}
 
@@ -383,17 +493,28 @@ function App() {
           <div className="footer-col">
             <h4>¡Sé parte de Studio SD!</h4>
             <p>Recibe novedades y promociones antes que nadie.</p>
-            <div className="newsletter">
-              <input type="email" placeholder="Dirección de correo electrónico" />
-              <button>Suscribirse</button>
-            </div>
+            <form className="newsletter" onSubmit={suscribirse} noValidate>
+              <input
+                type="email"
+                placeholder="Dirección de correo electrónico"
+                value={correoBoletin}
+                onChange={(e) => { setCorreoBoletin(e.target.value); setMensajeBoletin(null) }}
+                aria-label="Correo para el boletín"
+              />
+              <button type="submit">Suscribirse</button>
+            </form>
+            {mensajeBoletin && (
+              <p className={`boletin-msg ${mensajeBoletin.ok ? 'ok' : 'error'}`}>{mensajeBoletin.texto}</p>
+            )}
           </div>
 
           <div className="footer-col">
             <h5>Categorías</h5>
             <ul>
               {categorias.map(cat => (
-                <li key={cat.id}>{cat.nombre}</li>
+                <li key={cat.id}>
+                  <a href="#catalogo" onClick={() => elegirCategoria(cat.id)}>{cat.nombre}</a>
+                </li>
               ))}
             </ul>
           </div>
@@ -401,21 +522,27 @@ function App() {
           <div className="footer-col">
             <h5>Servicio al cliente</h5>
             <ul>
-              <li>Preguntas frecuentes</li>
-              <li>Política de privacidad</li>
-              <li>Políticas de envío y devolución</li>
-              <li>Contáctanos</li>
+              <li><a href="#/info/preguntas-frecuentes">Preguntas frecuentes</a></li>
+              <li><a href="#/info/privacidad">Política de privacidad</a></li>
+              <li><a href="#/info/envios-y-devoluciones">Políticas de envío y devolución</a></li>
+              <li><a href="#/info/contacto">Contáctanos</a></li>
             </ul>
           </div>
 
           <div className="footer-col">
             <h5>Información</h5>
             <p>Horario: Lunes a viernes, 8:00 am - 6:00 pm</p>
-            <p>Correo: contacto@studiosd.co</p>
+            <p>Correo: <a className="footer-link" href="mailto:contacto@studiosd.co">contacto@studiosd.co</a></p>
             <div className="footer-social">
-              <span>📷</span>
-              <span>📘</span>
-              <span>🎵</span>
+              <a href="https://www.instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram">
+                <Icono><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.3" cy="6.7" r="0.8" /></Icono>
+              </a>
+              <a href="https://www.facebook.com" target="_blank" rel="noreferrer" aria-label="Facebook">
+                <Icono><path d="M14 8h3V4h-3a4 4 0 00-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z" /></Icono>
+              </a>
+              <a href="https://www.tiktok.com" target="_blank" rel="noreferrer" aria-label="TikTok">
+                <Icono><path d="M14 3v11a4 4 0 11-4-4" /><path d="M14 3c0 3 2 5 5 5" /></Icono>
+              </a>
             </div>
           </div>
         </div>
