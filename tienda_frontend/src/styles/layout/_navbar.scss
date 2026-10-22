@@ -1,0 +1,178 @@
+// Navbar
+@use '../abstractos' as *;
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 2.5rem;
+  background-color: $negro;
+  color: $blanco;
+}
+
+.logo {
+  cursor: pointer;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+
+  a {
+    color: $blanco;
+    text-decoration: none;
+    font-size: 0.95rem;
+
+    &.activo {
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+  }
+}
+
+.nav-iconos {
+  display: flex;
+  align-items: center;
+  gap: 1.3rem;
+  margin-left: 0.5rem;
+}
+
+.icono-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  color: $blanco;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    opacity: 0.75;
+  }
+}
+
+.punto-sesion {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #1ec76a;
+  border: 2px solid $negro;
+}
+
+.usuario-wrap {
+  position: relative;
+}
+
+.menu-usuario {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: -10px;
+  width: 220px;
+  background: $blanco;
+  color: $negro;
+  border-radius: $radio-lg;
+  padding: 0.9rem;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  z-index: 15;
+
+  p {
+    margin: 0 0 0.6rem 0;
+    font-size: 0.9rem;
+  }
+
+  a,
+  button {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.4rem;
+    text-align: left;
+    background: none;
+    border: none;
+    border-top: 1px solid $gris-100;
+    color: $negro !important;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: inherit;
+  }
+
+  a:hover,
+  button:hover {
+    background: #f4f4f4;
+  }
+}
+
+.buscador {
+  position: sticky;
+  top: 66px;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 2.5rem;
+  background: #1c1c1c;
+
+  input {
+    flex: 1;
+    padding: 0.75rem 1.1rem;
+    border: none;
+    border-radius: $radio-pildora;
+    font-size: 1rem;
+    outline: none;
+  }
+
+  button {
+    background: none;
+    border: none;
+    color: $blanco;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+}
+
+.resultados {
+  text-align: center;
+  color: #666;
+  margin: 0 0 1.5rem 0;
+}
+
+#catalogo {
+  scroll-margin-top: 130px;
+}
+
+.modal-login {
+  max-width: 400px;
+}
+
+.btn-ancho {
+  width: 100%;
+  margin-top: 0.4rem;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background-color: $rojo-error;
+  color: $blanco;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

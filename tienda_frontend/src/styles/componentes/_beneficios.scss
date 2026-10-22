@@ -1,0 +1,43 @@
+// Beneficios
+@use '../abstractos' as *;
+
+.beneficios {
+  max-width: 1200px;
+  margin: -2rem auto 0;
+  padding: 0 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.beneficio {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: $blanco;
+  border-radius: $radio-lg;
+  padding: 1.1rem 1.4rem;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.09);
+
+  svg {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+
+  strong {
+    font-size: 0.95rem;
+  }
+
+  span {
+    font-size: 0.82rem;
+    color: $gris-500;
+  }
+}

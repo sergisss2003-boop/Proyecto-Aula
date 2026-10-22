@@ -1,0 +1,36 @@
+// Fila de subcategorías en el catálogo
+@use '../abstractos' as *;
+
+.subcategorias {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: -1.8rem 0 3rem;
+
+  button {
+    padding: 0.4rem 1rem;
+    border: none;
+    border-radius: $radio-pildora;
+    background: #ececec;
+    color: $gris-800;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+
+    &:hover {
+      background: $gris-200;
+    }
+
+    &.activo {
+      background: $gris-800;
+      color: $blanco;
+    }
+  }
+}
+
+@include hasta($tablet) {
+  .mega-menu {
+    display: none;
+  }
+}

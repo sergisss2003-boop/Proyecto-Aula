@@ -1,0 +1,91 @@
+// Menú desplegable de categorías (Mujer, Hombre, Accesorios...)
+@use '../abstractos' as *;
+
+.nav-item {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  /* ocupa toda la altura del navbar para que el mouse pueda bajar al desplegable sin que se cierre */
+  margin: -1.2rem 0;
+  padding: 1.2rem 0;
+}
+
+.mega-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: $blanco;
+  color: $texto;
+  border-top: 1px solid #e5e5e5;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.12);
+  animation: mega-aparecer 0.15s ease-out;
+}
+
+@keyframes mega-aparecer {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.mega-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 2.5rem 2.4rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 3rem;
+}
+
+.mega-lista {
+  h4 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0 0 1.4rem;
+    padding: 0;
+    /* las subcategorías se reparten en columnas de máximo 6 */
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(6, auto);
+    column-gap: 3.5rem;
+    row-gap: 0.65rem;
+  }
+}
+
+.nav-links .mega-menu a {
+  color: $gris-800;
+}
+
+.mega-lista li a:hover {
+  color: #000;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.nav-links {
+  .mega-menu {
+    a.mega-todo {
+      font-weight: 700;
+      color: $negro;
+    }
+
+    a.mega-imagen {
+      flex-shrink: 0;
+      width: 280px;
+      height: 200px;
+      border-radius: $radio-lg;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+      color: $blanco;
+      font-weight: 700;
+    }
+  }
+}

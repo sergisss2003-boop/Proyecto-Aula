@@ -1,0 +1,38 @@
+// Catálogo
+@use '../abstractos' as *;
+
+.catalogo-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+.categorias {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+
+  button {
+    padding: 0.6rem 1.4rem;
+    border: 1px solid $gris-250;
+    border-radius: $radio-pildora;
+    background-color: $blanco;
+    color: $gris-800;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: 0.2s;
+
+    &:hover {
+      border-color: $negro;
+    }
+
+    &.activo {
+      background-color: $negro;
+      color: $blanco;
+      border-color: $negro;
+    }
+  }
+}

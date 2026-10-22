@@ -1,7 +1,21 @@
 import { useState } from 'react'
+import { tallasDe, descuentoDe } from './utils/producto'
 
-export const tallasDe = (producto) =>
-  (producto.talla || '').split(',').map(t => t.trim()).filter(Boolean)
+// Precio actual y, si hay descuento, el precio anterior tachado
+export function Precio({ producto, formatoPrecio, className = 'precio' }) {
+  const descuento = descuentoDe(producto)
+  return (
+    <span className={`precio-wrap ${descuento ? 'con-descuento' : ''}`}>
+      <span className={className}>{formatoPrecio(producto.precio)}</span>
+      {descuento > 0 && <s className="precio-antes">{formatoPrecio(producto.precio_anterior)}</s>}
+    </span>
+  )
+}
+
+export function EtiquetaDescuento({ producto }) {
+  const descuento = descuentoDe(producto)
+  return descuento > 0 ? <span className="etiqueta-descuento">-{descuento}%</span> : null
+}
 
 function Producto({ producto, categoria, relacionados, formatoPrecio, enCarrito, onAgregar, onComprarAhora }) {
   const tallas = tallasDe(producto)
@@ -45,6 +59,7 @@ function Producto({ producto, categoria, relacionados, formatoPrecio, enCarrito,
 
       <div className="detalle">
         <div className="detalle-imagen">
+          <EtiquetaDescuento producto={producto} />
           {producto.imagen
             ? <img src={producto.imagen} alt={producto.nombre} />
             : <span className="sin-imagen">{producto.nombre.charAt(0)}</span>}
@@ -53,7 +68,12 @@ function Producto({ producto, categoria, relacionados, formatoPrecio, enCarrito,
         <div className="detalle-info">
           {categoria && <p className="detalle-categoria">{categoria.nombre}</p>}
           <h1>{producto.nombre}</h1>
-          <p className="detalle-precio">{formatoPrecio(producto.precio)}</p>
+          <p className="detalle-precio-linea">
+            <Precio producto={producto} formatoPrecio={formatoPrecio} className="detalle-precio" />
+            {descuentoDe(producto) > 0 && (
+              <span className="ahorro">Ahorras {formatoPrecio(producto.precio_anterior - producto.precio)}</span>
+            )}
+          </p>
 
           {producto.descripcion && <p className="detalle-descripcion">{producto.descripcion}</p>}
           {producto.color && <p className="detalle-dato"><strong>Color:</strong> {producto.color}</p>}
@@ -109,11 +129,12 @@ function Producto({ producto, categoria, relacionados, formatoPrecio, enCarrito,
             {relacionados.map(p => (
               <a className="producto producto-link" key={p.id} href={`#/producto/${p.id}`}>
                 <div className="producto-imagen">
+                  <EtiquetaDescuento producto={p} />
                   {p.imagen ? <img src={p.imagen} alt={p.nombre} /> : <span className="sin-imagen">{p.nombre.charAt(0)}</span>}
                 </div>
                 <div className="producto-info">
                   <h3>{p.nombre}</h3>
-                  <span className="precio">{formatoPrecio(p.precio)}</span>
+                  <Precio producto={p} formatoPrecio={formatoPrecio} />
                 </div>
               </a>
             ))}

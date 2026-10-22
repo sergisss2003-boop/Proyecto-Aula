@@ -3,13 +3,17 @@ import axios from 'axios'
 import Checkout from './Checkout'
 import Admin from './Admin'
 import Login from './Login'
-import Producto, { tallasDe } from './Producto'
+import Producto, { Precio, EtiquetaDescuento } from './Producto'
+import { tallasDe, descuentoDe } from './utils/producto'
 import Info from './Info'
-import './App.css'
 
-const API_URL = 'http://127.0.0.1:8000/api'
+// La API se pide al mismo servidor del frontend; Vite la pasa a Django (ver vite.config.js)
+const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 const quitarTildes = (texto) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+// La categoría "Descuentos" es especial: muestra sola todos los productos que tienen "precio antes"
+const esDescuentos = (cat) => !!cat && quitarTildes(cat.nombre.trim()) === 'descuentos'
 
 function Icono({ children }) {
   return (
@@ -23,6 +27,7 @@ function App() {
   const [categorias, setCategorias] = useState([])
   const [productos, setProductos] = useState([])
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null)
+  const [menuAbierto, setMenuAbierto] = useState(null)   // categoría principal cuyo desplegable está abierto
   const [carrito, setCarrito] = useState(() => {
     try {
       const guardado = JSON.parse(localStorage.getItem('carrito')) || []
@@ -92,9 +97,11 @@ function App() {
   }
 
   // Si alguien entra a #/admin sin haber iniciado sesión, se le pide el login
-  useEffect(() => {
-    if (hash === '#/admin' && !sesion) setLoginAbierto(true)
-  }, [hash, sesion])
+  const mostrarLogin = loginAbierto || (hash === '#/admin' && !sesion)
+  const cerrarLogin = () => {
+    setLoginAbierto(false)
+    if (window.location.hash === '#/admin') window.location.hash = ''
+  }
 
   const iniciarSesion = (datos) => {
     try {
@@ -135,11 +142,25 @@ function App() {
       .catch(error => console.error('Error cargando productos:', error))
   }, [vista])
 
+  // --- Categorías principales (Mujer, Hombre...) y sus subcategorías (Camisas, Jeans...) ---
+  const principales = categorias.filter(c => !c.padre)
+  const subcategoriasDe = (id) => categorias.filter(c => c.padre === id)
+  // Una categoría principal incluye los productos de todas sus subcategorías
+  const idsDe = (id) => [id, ...subcategoriasDe(id).map(c => c.id)]
+  const seleccionada = categorias.find(c => c.id === categoriaSeleccionada)
+  const principalSeleccionada = seleccionada ? (seleccionada.padre ?? seleccionada.id) : null
+
   // Los productos marcados como "inactivo" en el panel no se muestran en la tienda
   const productosActivos = productos.filter(p => p.estado !== 'inactivo')
-  const porCategoria = categoriaSeleccionada
-    ? productosActivos.filter(p => p.categoria === categoriaSeleccionada)
-    : productosActivos
+  const enDescuento = (p) => descuentoDe(p) > 0
+  const productosDe = (catId) => {
+    const cat = categorias.find(c => c.id === catId)
+    if (esDescuentos(cat)) {
+      return productosActivos.filter(p => enDescuento(p) || idsDe(catId).includes(p.categoria))
+    }
+    return productosActivos.filter(p => idsDe(catId).includes(p.categoria))
+  }
+  const porCategoria = categoriaSeleccionada ? productosDe(categoriaSeleccionada) : productosActivos
   const textoBusqueda = quitarTildes(busqueda.trim())
   const productosFiltrados = textoBusqueda
     ? porCategoria.filter(p => quitarTildes(`${p.nombre} ${p.descripcion}`).includes(textoBusqueda))
@@ -148,12 +169,13 @@ function App() {
   // Imágenes de la portada: los productos más recientes que tengan foto
   const conImagen = productosActivos.filter(p => p.imagen)
   const destacados = [...conImagen].sort((a, b) => b.id - a.id).slice(0, 3)
-  const imagenDeCategoria = (catId) => conImagen.find(p => p.categoria === catId)?.imagen
+  const imagenDeCategoria = (catId) => productosDe(catId).find(p => p.imagen)?.imagen
   const imagenBanner = conImagen.length ? conImagen[conImagen.length - 1].imagen : null
 
   const elegirCategoria = (id) => {
     setCategoriaSeleccionada(id)
     setBusqueda('')
+    setMenuAbierto(null)
   }
 
   // --- Carrito ---
@@ -268,16 +290,55 @@ function App() {
           STUDIO SD
         </span>
         <div className="nav-links">
-          {categorias.map(cat => (
-            <a
-              key={cat.id}
-              href="#catalogo"
-              className={categoriaSeleccionada === cat.id ? 'activo' : ''}
-              onClick={() => setCategoriaSeleccionada(cat.id)}
-            >
-              {cat.nombre}
-            </a>
-          ))}
+          {principales.map(cat => {
+            const subs = subcategoriasDe(cat.id)
+            const img = imagenDeCategoria(cat.id)
+            return (
+              <div
+                className="nav-item"
+                key={cat.id}
+                onMouseEnter={() => setMenuAbierto(cat.id)}
+                onMouseLeave={() => setMenuAbierto(null)}
+              >
+                <a
+                  href="#catalogo"
+                  className={`${principalSeleccionada === cat.id ? 'activo' : ''} ${esDescuentos(cat) ? 'nav-descuentos' : ''}`}
+                  onClick={() => elegirCategoria(cat.id)}
+                >
+                  {cat.nombre}
+                </a>
+                {subs.length > 0 && menuAbierto === cat.id && (
+                  <div className="mega-menu">
+                    <div className="mega-inner">
+                      <div className="mega-lista">
+                        <h4>{cat.nombre}</h4>
+                        <ul>
+                          {subs.map(sub => (
+                            <li key={sub.id}>
+                              <a href="#catalogo" onClick={() => elegirCategoria(sub.id)}>{sub.nombre}</a>
+                            </li>
+                          ))}
+                        </ul>
+                        <a className="mega-todo" href="#catalogo" onClick={() => elegirCategoria(cat.id)}>
+                          Ver todo {cat.nombre} →
+                        </a>
+                      </div>
+                      {img && (
+                        <a
+                          className="mega-imagen"
+                          href="#catalogo"
+                          onClick={() => elegirCategoria(cat.id)}
+                          style={{ backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0) 55%), url("${img}")` }}
+                        >
+                          <span>Nueva colección {cat.nombre}</span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
           <div className="nav-iconos">
             <button className="icono-btn" onClick={() => setBuscadorAbierto(!buscadorAbierto)} aria-label="Buscar productos">
               <Icono><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Icono>
@@ -372,7 +433,10 @@ function App() {
                   <img src={prod.imagen} alt={prod.nombre} />
                   <span className="collage-info">
                     <strong>{prod.nombre}</strong>
-                    <small>{formatoPrecio(prod.precio)}</small>
+                    <small>
+                      {formatoPrecio(prod.precio)}
+                      {enDescuento(prod) && <s className="collage-antes">{formatoPrecio(prod.precio_anterior)}</s>}
+                    </small>
                   </span>
                 </a>
               ))}
@@ -396,11 +460,11 @@ function App() {
         </div>
       </section>
 
-      {categorias.length > 0 && (
+      {principales.length > 0 && (
         <section className="categorias-seccion">
           <h2 className="titulo-seccion">Compra por categoría</h2>
           <div className="categorias-tiles">
-            {categorias.map(cat => {
+            {principales.map(cat => {
               const img = imagenDeCategoria(cat.id)
               return (
                 <a
@@ -423,12 +487,27 @@ function App() {
         <h2 className="titulo-seccion">Catálogo</h2>
         <div className="categorias">
           <button className={categoriaSeleccionada === null ? 'activo' : ''} onClick={() => elegirCategoria(null)}>Todo</button>
-          {categorias.map(cat => (
-            <button key={cat.id} className={categoriaSeleccionada === cat.id ? 'activo' : ''} onClick={() => elegirCategoria(cat.id)}>
+          {principales.map(cat => (
+            <button key={cat.id} className={principalSeleccionada === cat.id ? 'activo' : ''} onClick={() => elegirCategoria(cat.id)}>
               {cat.nombre}
             </button>
           ))}
         </div>
+        {principalSeleccionada && subcategoriasDe(principalSeleccionada).length > 0 && (
+          <div className="subcategorias">
+            <button
+              className={categoriaSeleccionada === principalSeleccionada ? 'activo' : ''}
+              onClick={() => elegirCategoria(principalSeleccionada)}
+            >
+              Todo {seleccionada.padre ? categorias.find(c => c.id === principalSeleccionada)?.nombre : seleccionada.nombre}
+            </button>
+            {subcategoriasDe(principalSeleccionada).map(sub => (
+              <button key={sub.id} className={categoriaSeleccionada === sub.id ? 'activo' : ''} onClick={() => elegirCategoria(sub.id)}>
+                {sub.nombre}
+              </button>
+            ))}
+          </div>
+        )}
         {textoBusqueda && (
           <p className="resultados">
             {productosFiltrados.length} resultado(s) para “{busqueda.trim()}”
@@ -438,6 +517,7 @@ function App() {
           {productosFiltrados.map(prod => (
             <div className="producto" key={prod.id}>
               <a className="producto-imagen" href={`#/producto/${prod.id}`}>
+                <EtiquetaDescuento producto={prod} />
                 {prod.imagen
                   ? <img src={prod.imagen} alt={prod.nombre} />
                   : <span className="sin-imagen">{prod.nombre.charAt(0)}</span>
@@ -447,7 +527,7 @@ function App() {
                 <h3><a className="producto-titulo" href={`#/producto/${prod.id}`}>{prod.nombre}</a></h3>
                 <p className="descripcion">{prod.descripcion}</p>
                 <div className="producto-footer">
-                  <span className="precio">${Number(prod.precio).toLocaleString('es-CO')}</span>
+                  <Precio producto={prod} formatoPrecio={formatoPrecio} />
                   {tallasDe(prod).length > 0 ? (
                     <a className="btn-agregar" href={`#/producto/${prod.id}`}>
                       {prod.stock === 0 ? 'Agotado' : 'Ver tallas'}
@@ -470,7 +550,11 @@ function App() {
 
         {productosFiltrados.length === 0 && (
           <p className="vacio">
-            {textoBusqueda ? 'No encontramos productos con esa búsqueda.' : 'No hay productos en esta categoría.'}
+            {textoBusqueda
+              ? 'No encontramos productos con esa búsqueda.'
+              : esDescuentos(seleccionada)
+                ? 'Por ahora no hay productos en descuento. ¡Vuelve pronto!'
+                : 'No hay productos en esta categoría.'}
           </p>
         )}
       </section>
@@ -511,7 +595,7 @@ function App() {
           <div className="footer-col">
             <h5>Categorías</h5>
             <ul>
-              {categorias.map(cat => (
+              {principales.map(cat => (
                 <li key={cat.id}>
                   <a href="#catalogo" onClick={() => elegirCategoria(cat.id)}>{cat.nombre}</a>
                 </li>
@@ -600,10 +684,10 @@ function App() {
         )}
       </aside>
 
-      {loginAbierto && (
+      {mostrarLogin && (
         <Login
           apiUrl={API_URL}
-          onCerrar={() => setLoginAbierto(false)}
+          onCerrar={cerrarLogin}
           onExito={iniciarSesion}
         />
       )}
@@ -621,4 +705,4 @@ function App() {
   )
 }
 
-export default App
+export default App

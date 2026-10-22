@@ -1,0 +1,74 @@
+// Descuentos
+@use '../abstractos' as *;
+
+.precio-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.5rem;
+
+  &.con-descuento .precio,
+  &.con-descuento .detalle-precio {
+    color: $rojo-descuento;
+  }
+}
+
+.precio-antes {
+  color: #8a8a8a;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.detalle-precio-linea {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  margin: 0 0 1.2rem 0;
+
+  .detalle-precio {
+    margin: 0;
+  }
+
+  .precio-antes {
+    font-size: 1.05rem;
+  }
+}
+
+.ahorro {
+  padding: 0.2rem 0.6rem;
+  border-radius: $radio-sm;
+  background: #fdeaec;
+  color: #b3202f;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.producto-imagen,
+.detalle-imagen {
+  position: relative;
+}
+
+.etiqueta-descuento {
+  position: absolute;
+  top: 0.8rem;
+  left: 0.8rem;
+  z-index: 1;
+  padding: 0.25rem 0.6rem;
+  border-radius: $radio-sm;
+  background: $rojo-descuento;
+  color: $blanco;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.collage-antes {
+  margin-left: 0.4rem;
+  opacity: 0.75;
+}
+
+.nav-links a.nav-descuentos {
+  color: #ff5a6a;
+  font-weight: 700;
+}

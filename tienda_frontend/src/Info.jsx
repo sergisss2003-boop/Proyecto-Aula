@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export const SECCIONES_INFO = [
+const SECCIONES_INFO = [
   { id: 'preguntas-frecuentes', titulo: 'Preguntas frecuentes' },
   { id: 'envios-y-devoluciones', titulo: 'Envíos y devoluciones' },
   { id: 'privacidad', titulo: 'Política de privacidad' },

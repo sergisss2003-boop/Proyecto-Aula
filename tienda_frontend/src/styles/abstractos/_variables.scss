@@ -1,0 +1,47 @@
+// ============================================================
+// Variables: colores, medidas y tipografía de Studio SD.
+// Cambia un valor aquí y se actualiza en toda la tienda.
+// ============================================================
+
+// --- Colores de marca ---
+$negro: #111;              // navbar, botones principales
+$texto: #1a1a1a;           // texto general
+$blanco: white;
+$fondo-pagina: #fafafa;
+
+$azul: #2e5c8a;            // enlaces y detalles
+$azul-claro: #eaf1f8;      // fondo de productos sin foto
+$azul-claro-2: #d6e4f0;
+
+// --- Escala de grises (900 = más oscuro) ---
+$gris-900: #222;
+$gris-800: #333;
+$gris-700: #444;
+$gris-600: #555;
+$gris-500: #777;
+$gris-400: #999;
+$gris-300: #bbb;
+$gris-250: #ccc;
+$gris-200: #ddd;
+$gris-100: #eee;
+
+// --- Estados ---
+$rojo-error: #e5484d;
+$rojo-descuento: #d62839;
+$verde-ok: #167a45;
+$verde-ok-fondo: #dcf5e7;
+
+// --- Bordes redondeados ---
+$radio-sm: 6px;
+$radio-md: 8px;
+$radio-lg: 12px;
+$radio-xl: 16px;
+$radio-pildora: 30px;      // botones en forma de cápsula
+
+// --- Tipografía ---
+$fuente-base: 'Segoe UI', Arial, sans-serif;
+
+// --- Puntos de quiebre (tamaños de pantalla) ---
+$tablet: 860px;
+$tablet-pequena: 800px;
+$movil: 760px;

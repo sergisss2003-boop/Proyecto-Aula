@@ -1,0 +1,13 @@
+// Estilos generales
+@use '../abstractos' as *;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: $fuente-base;
+  background-color: $fondo-pagina;
+  color: $texto;
+}

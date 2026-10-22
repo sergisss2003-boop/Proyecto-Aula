@@ -17,3 +17,8 @@ media/
 
 # VS Code
 .vscode/
+# Dependencias de Node (raíz y frontend)
+node_modules/
+
+# Estilos compilados a mano con "npm run estilos"
+tienda_frontend/dist-estilos/

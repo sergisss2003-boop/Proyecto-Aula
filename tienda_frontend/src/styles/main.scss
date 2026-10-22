@@ -1,0 +1,39 @@
+// ============================================================
+// Studio SD - hoja de estilos principal
+// Vite compila este archivo (y todos los parciales) a CSS automáticamente.
+// El ORDEN importa: los estilos que van después pueden sobrescribir a los anteriores.
+// ============================================================
+
+// Base
+@use 'base/reset';
+@use 'base/base';
+
+// Estructura general
+@use 'layout/navbar';
+
+// Portada
+@use 'paginas/portada-hero';
+@use 'componentes/beneficios';
+@use 'paginas/portada-categorias';
+@use 'componentes/banner-promo';
+
+// Catálogo y productos
+@use 'paginas/catalogo';
+@use 'componentes/tarjeta-producto';
+@use 'layout/footer';
+
+// Compra
+@use 'componentes/carrito';
+@use 'componentes/checkout';
+
+// Administración y páginas internas
+@use 'paginas/admin';
+@use 'paginas/producto';
+@use 'layout/footer-enlaces';
+@use 'paginas/ayuda';
+
+// Agregados después: menú desplegable, descuentos y tallas
+@use 'layout/menu-desplegable';
+@use 'componentes/subcategorias';
+@use 'componentes/descuentos';
+@use 'componentes/selector-tallas';

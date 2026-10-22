@@ -21,6 +21,7 @@ function Login({ apiUrl, onCerrar, onExito }) {
     } catch (err) {
       if (err.response?.status === 403) setError(err.response.data?.detail || 'No tienes permisos de administrador')
       else if (err.response?.status === 400) setError('Usuario o contraseña incorrectos')
+      else if (err.response?.status === 429) setError('Demasiados intentos. Espera un minuto e inténtalo de nuevo.')
       else if (err.response) setError(`El servidor respondió con error ${err.response.status}`)
       else setError('No se pudo conectar con el servidor. ¿Está encendido el backend?')
       setEnviando(false)

@@ -1,0 +1,286 @@
+// Página de producto
+@use '../abstractos' as *;
+
+a.btn-agregar {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.producto-titulo {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+a.producto-imagen {
+  cursor: pointer;
+}
+
+.producto-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.detalle-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 3rem;
+}
+
+.migas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: $gris-500;
+  margin-bottom: 1.5rem;
+
+  a {
+    color: $gris-500;
+    text-decoration: none;
+
+    &:hover {
+      color: $negro;
+      text-decoration: underline;
+    }
+  }
+
+  strong {
+    color: $negro;
+    font-weight: 600;
+  }
+}
+
+.detalle {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+.detalle-imagen {
+  background: linear-gradient(135deg, $azul-claro, $azul-claro-2);
+  border-radius: 14px;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sin-imagen {
+    font-size: 8rem;
+  }
+}
+
+.detalle-categoria {
+  margin: 0 0 0.4rem 0;
+  font-size: 0.8rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: $azul;
+  font-weight: 700;
+}
+
+.detalle-info h1 {
+  margin: 0 0 0.6rem 0;
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+.detalle-precio {
+  margin: 0 0 1.2rem 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.detalle-descripcion {
+  margin: 0 0 1rem 0;
+  color: $gris-600;
+  line-height: 1.6;
+}
+
+.detalle-dato {
+  margin: 0 0 1.2rem 0;
+  color: $gris-600;
+}
+
+.detalle-etiqueta {
+  margin: 1.2rem 0 0.7rem 0;
+  font-size: 0.85rem;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+.tallas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+
+  button {
+    min-width: 56px;
+    height: 48px;
+    padding: 0 1rem;
+    background: $blanco;
+    border: 1px solid $gris-250;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+
+    &:hover:not(:disabled) {
+      border-color: $negro;
+    }
+
+    &.activa {
+      border: 2px solid $negro;
+      background: $negro;
+      color: $blanco;
+    }
+  }
+}
+
+.detalle-acciones {
+  display: flex;
+  gap: 0.8rem;
+  margin: 1.5rem 0 0.8rem 0;
+}
+
+.cantidad-grande {
+  border-radius: $radio-sm;
+  background: $blanco;
+
+  button {
+    width: 42px;
+    height: 52px;
+  }
+}
+
+.btn-agregar-grande {
+  flex: 1;
+  background: $negro;
+  color: $blanco;
+  border: none;
+  border-radius: $radio-sm;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover:not(:disabled) {
+    background: $azul;
+  }
+}
+
+.btn-comprar-ahora {
+  width: 100%;
+  padding: 1rem;
+  background: $blanco;
+  color: $negro;
+  border: 1px solid $negro;
+  border-radius: $radio-sm;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.2s;
+
+  &:hover:not(:disabled) {
+    background: $negro;
+    color: $blanco;
+  }
+}
+
+.btn-agregar-grande:disabled,
+.btn-comprar-ahora:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.detalle-agotado {
+  margin-top: 1.5rem;
+  padding: 0.9rem;
+  background: $gris-100;
+  color: $gris-500;
+  text-align: center;
+  font-weight: 700;
+  border-radius: $radio-sm;
+}
+
+.detalle-pocas {
+  margin: 0.8rem 0 0 0;
+  color: $rojo-error;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.detalle-vacio {
+  padding: 4rem 1rem;
+}
+
+.relacionados {
+  margin-top: 4rem;
+
+  h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.4rem;
+  }
+}
+
+.carrito-talla {
+  margin: 0 0 0.2rem 0;
+  font-size: 0.8rem;
+  color: $azul;
+  font-weight: 600;
+}
+
+@include hasta($tablet-pequena) {
+  .detalle {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .admin-top {
+    padding: 1rem 1.2rem;
+  }
+
+  .admin-barra {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-buscar {
+    max-width: none;
+  }
+
+  .checkout-cuerpo,
+  .campos-grid,
+  .confirmacion-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout {
+    padding: 1.5rem 1.2rem 2rem;
+  }
+
+  .footer-top {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .footer-brand {
+    font-size: 3rem;
+  }
+}

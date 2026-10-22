@@ -1,0 +1,20 @@
+/* Casillas de tallas en una sola fila en el admin de Django */
+[id^="id_tallas_"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.1rem;
+  margin: 0;
+  padding: 0;
+}
+[id^="id_tallas_"] > div,
+[id^="id_tallas_"] > li {
+  list-style: none;
+  margin: 0;
+}
+[id^="id_tallas_"] label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: auto;
+  font-weight: normal;
+}

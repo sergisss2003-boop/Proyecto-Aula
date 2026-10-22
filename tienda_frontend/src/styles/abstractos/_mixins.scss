@@ -1,0 +1,11 @@
+// ============================================================
+// Mixins: bloques de código reutilizables.
+// ============================================================
+
+// Aplica estilos solo en pantallas de hasta cierto ancho.
+// Uso:  @include hasta($movil) { .navbar { padding: 1rem; } }
+@mixin hasta($ancho) {
+  @media (max-width: $ancho) {
+    @content;
+  }
+}

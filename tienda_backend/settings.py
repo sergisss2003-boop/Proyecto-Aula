@@ -10,22 +10,49 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.csp import CSP
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Los datos sensibles (clave secreta, contraseña de la base de datos) se leen del archivo .env,
+# que NO se sube a GitHub. Copia .env.example como .env y llena tus valores.
+load_dotenv(BASE_DIR / '.env')
+
+
+def env(nombre, defecto=None):
+    return os.environ.get(nombre, defecto)
+
+
+def env_bool(nombre, defecto=False):
+    return env(nombre, str(defecto)).strip().lower() in ('1', 'true', 'si', 'sí', 'yes')
+
+
+def env_lista(nombre, defecto=''):
+    return [x.strip() for x in env(nombre, defecto).split(',') if x.strip()]
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-=&+0iyjxw802q!*^%yeyq6&0p_tc(gvleb4ka41$d%3pq8c)j9'
+SECRET_KEY = env('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# DEBUG=True solo en desarrollo. En producción debe ser False (muestra menos información de errores).
+DEBUG = env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = []
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('Falta DJANGO_SECRET_KEY en el archivo .env')
+    SECRET_KEY = 'django-insecure-solo-para-desarrollo-local'
+
+ALLOWED_HOSTS = env_lista('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 
 # Application definition
@@ -53,6 +80,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.csp.ContentSecurityPolicyMiddleware',
 ]
 
 ROOT_URLCONF = 'tienda_backend.urls'
@@ -81,13 +109,18 @@ WSGI_APPLICATION = 'tienda_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'tienda_studio_sd',
-        'USER': 'postgres',
-        'PASSWORD': '12345678',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': env('DB_NAME', 'tienda_studio_sd'),
+        'USER': env('DB_USER', 'postgres'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST', 'localhost'),
+        'PORT': env('DB_PORT', '5432'),
     }
 }
+
+if DATABASES['default']['PASSWORD'] is None:
+    raise ImproperlyConfigured(
+        'Falta DB_PASSWORD. Crea el archivo .env (copia .env.example) y escribe la contraseña de PostgreSQL.'
+    )
 
 
 # Password validation
@@ -149,9 +182,65 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
+# Orígenes que pueden llamar a la API desde otro dominio/puerto
+CORS_ALLOWED_ORIGINS = env_lista('DJANGO_CORS_ORIGINS', 'http://localhost:5173,https://localhost:5173')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# ---------------------------------------------------------------------------
+# SEGURIDAD
+# ---------------------------------------------------------------------------
+
+# --- CSRF y cookies ---
+# Solo se aceptan formularios/peticiones con cookies que vengan de estos orígenes.
+CSRF_TRUSTED_ORIGINS = env_lista(
+    'DJANGO_CSRF_TRUSTED_ORIGINS',
+    'http://localhost:5173,https://localhost:5173,http://127.0.0.1:5173',
+)
+# SameSite=Lax: el navegador no envía las cookies cuando la petición la inicia otro sitio web.
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+# JavaScript no puede leer la cookie de sesión (si se colara un script, no podría robarla).
+SESSION_COOKIE_HTTPONLY = True
+
+# --- HTTPS ---
+# USAR_HTTPS=True cuando la página se sirve con https (en producción siempre).
+USAR_HTTPS = env_bool('DJANGO_USAR_HTTPS', not DEBUG)
+if USAR_HTTPS:
+    SECURE_SSL_REDIRECT = env_bool('DJANGO_REDIRIGIR_HTTPS', not DEBUG)  # http:// -> https://
+    SESSION_COOKIE_SECURE = True   # las cookies solo viajan cifradas
+    CSRF_COOKIE_SECURE = True
+    # HSTS: el navegador recuerda que este sitio SOLO se abre con https
+    SECURE_HSTS_SECONDS = int(env('DJANGO_HSTS_SEGUNDOS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = False
+# Si hay un proxy delante (Vite en desarrollo, Nginx en producción) que recibe el https,
+# este encabezado le avisa a Django que la conexión original era segura.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# --- Cabeceras contra XSS y otros ataques ---
+SECURE_CONTENT_TYPE_NOSNIFF = True       # el navegador no "adivina" el tipo de archivo
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
+X_FRAME_OPTIONS = 'DENY'                 # nadie puede meter el sitio dentro de un iframe
+
+# Content Security Policy: el navegador solo ejecuta scripts y estilos de este mismo sitio.
+# Aunque alguien lograra meter un <script> en la página, el navegador no lo ejecutaría.
+SECURE_CSP = {
+    'default-src': [CSP.SELF],
+    'script-src': [CSP.SELF, 'https://cdn.jsdelivr.net'],  # jsdelivr: Swagger (/api/docs/)
+    'style-src': [CSP.SELF, CSP.UNSAFE_INLINE, 'https://cdn.jsdelivr.net'],  # Swagger usa estilos en línea
+    'img-src': [CSP.SELF, 'data:', 'https://cdn.jsdelivr.net'],
+    'object-src': [CSP.NONE],
+    'base-uri': [CSP.SELF],
+    'form-action': [CSP.SELF],
+    'frame-ancestors': [CSP.NONE],
+}
+
+# --- Límite de intentos ---
+# Máximo de intentos de inicio de sesión por minuto (evita adivinar contraseñas a la fuerza).
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
+    'login': env('LIMITE_LOGIN', '5/min'),
+}

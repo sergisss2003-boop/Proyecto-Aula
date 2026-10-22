@@ -1,0 +1,22 @@
+{
+  "name": "studio-sd",
+  "private": true,
+  "description": "Tienda Studio SD: backend Django + frontend React. Comandos para automatizar el trabajo.",
+  "type": "module",
+  "scripts": {
+    "instalar": "npm install && npm install --prefix tienda_frontend && node scripts/python.mjs -m pip install -r requirements.txt",
+    "dev": "concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:https": "concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend\" \"npm run dev:https --prefix tienda_frontend\"",
+    "dev:backend": "node scripts/python.mjs manage.py runserver",
+    "dev:frontend": "npm run dev --prefix tienda_frontend",
+    "migrar": "node scripts/python.mjs manage.py migrate",
+    "admin:crear": "node scripts/python.mjs manage.py createsuperuser",
+    "revisar": "node scripts/python.mjs manage.py check && npm run lint --prefix tienda_frontend",
+    "revisar:seguridad": "node scripts/python.mjs manage.py check --deploy",
+    "build": "npm run build --prefix tienda_frontend",
+    "preview": "npm run build && concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend\" \"npm run preview --prefix tienda_frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}

@@ -1,0 +1,4 @@
+// Punto de entrada de las herramientas (no generan CSS por sí solas).
+// Cada parcial las carga con:  @use '../abstractos' as *;
+@forward 'variables';
+@forward 'mixins';

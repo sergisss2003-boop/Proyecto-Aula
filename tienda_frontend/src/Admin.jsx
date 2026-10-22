@@ -3,6 +3,12 @@ import axios from 'axios'
 
 const formatoPrecio = (valor) => `$${Number(valor).toLocaleString('es-CO')}`
 
+// "Mujer › Camisas" para las subcategorías, "Mujer" para las principales
+const nombreCompleto = (cat, categorias) => {
+  const padre = cat.padre ? categorias.find(c => c.id === cat.padre) : null
+  return padre ? `${padre.nombre} › ${cat.nombre}` : cat.nombre
+}
+
 function mensajeError(error) {
   const data = error.response?.data
   if (data && typeof data === 'object') {
@@ -14,6 +20,87 @@ function mensajeError(error) {
   if (error.response?.status === 403) return 'No tienes permisos de administrador.'
   if (error.response) return `El servidor respondió con error ${error.response.status}`
   return 'No se pudo conectar con el servidor. ¿Está encendido el backend?'
+}
+
+// Tallas que se pueden marcar con un clic (las mismas que en el admin de Django)
+const GRUPOS_TALLAS = [
+  { clave: 'ropa', nombre: 'Ropa', valores: ['XS', 'S', 'M', 'L', 'XL', 'XXL'] },
+  { clave: 'pantalon', nombre: 'Pantalón', valores: ['6', '8', '10', '12', '14', '16', '28', '30', '32', '34', '36'] },
+  { clave: 'zapatos_mujer', nombre: 'Zapatos mujer', valores: ['34', '35', '36', '37', '38', '39', '40', '41'] },
+  { clave: 'zapatos_hombre', nombre: 'Zapatos hombre', valores: ['38', '39', '40', '41', '42', '43', '44', '45'] },
+]
+
+const separarTallas = (texto) => (texto || '').split(',').map(t => t.trim()).filter(Boolean)
+
+// Elige qué grupo mostrar al editar un producto que ya tiene tallas
+function grupoInicial(tallas, esHombre) {
+  if (tallas.length === 0) return 'ropa'
+  const candidatos = GRUPOS_TALLAS.filter(g => tallas.every(t => g.valores.includes(t))).map(g => g.clave)
+  if (esHombre && candidatos.includes('zapatos_hombre')) return 'zapatos_hombre'
+  return candidatos[0] ?? 'ropa'
+}
+
+function SelectorTallas({ valor, onCambiar, esHombre }) {
+  const tallas = separarTallas(valor)
+  const [tipo, setTipo] = useState(() => grupoInicial(tallas, esHombre))
+  const [otra, setOtra] = useState('')
+  const grupo = GRUPOS_TALLAS.find(g => g.clave === tipo)
+
+  const guardar = (lista) => onCambiar([...new Set(lista)].join(','))
+
+  const alternar = (t) => {
+    if (tallas.includes(t)) return guardar(tallas.filter(x => x !== t))
+    // las tallas del grupo quedan en su orden natural (S antes que M, 38 antes que 39)
+    const orden = (x) => { const i = grupo.valores.indexOf(x); return i === -1 ? -1 : i }
+    guardar([...tallas, t].sort((a, b) => orden(a) - orden(b)))
+  }
+
+  const agregarOtra = () => {
+    const nuevas = separarTallas(otra)
+    if (nuevas.length) guardar([...tallas, ...nuevas])
+    setOtra('')
+  }
+
+  return (
+    <div className="selector-tallas">
+      <span className="selector-titulo">Tallas (opcional)</span>
+      <div className="tallas-tipos">
+        {GRUPOS_TALLAS.map(g => (
+          <button type="button" key={g.clave} className={tipo === g.clave ? 'activo' : ''} onClick={() => setTipo(g.clave)}>
+            {g.nombre}
+          </button>
+        ))}
+      </div>
+      <div className="tallas-opciones">
+        {grupo.valores.map(t => (
+          <button type="button" key={t} className={tallas.includes(t) ? 'marcada' : ''} onClick={() => alternar(t)}>
+            {t}
+          </button>
+        ))}
+        <button type="button" className="tallas-todas" onClick={() => guardar([...tallas, ...grupo.valores])}>Todas</button>
+      </div>
+      <div className="tallas-otra">
+        <input
+          value={otra}
+          onChange={(e) => setOtra(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); agregarOtra() } }}
+          placeholder="Otra talla (ej: Única)"
+        />
+        <button type="button" className="btn-secundario" onClick={agregarOtra}>Agregar</button>
+      </div>
+      <p className="tallas-elegidas">
+        {tallas.length === 0 ? 'Sin tallas: en la tienda saldrá el botón “Agregar” directo.' : <>Seleccionadas:{' '}
+          {tallas.map(t => (
+            <span key={t} className="talla-chip">
+              {t}
+              <button type="button" onClick={() => guardar(tallas.filter(x => x !== t))} aria-label={`Quitar talla ${t}`}>✕</button>
+            </span>
+          ))}
+          <button type="button" className="tallas-limpiar" onClick={() => onCambiar('')}>Quitar todas</button>
+        </>}
+      </p>
+    </div>
+  )
 }
 
 function Campo({ label, error, children }) {
@@ -45,6 +132,7 @@ function FormProducto({ api, producto, categorias, onGuardado, onCancelar, onErr
     nombre: producto?.nombre ?? '',
     descripcion: producto?.descripcion ?? '',
     precio: producto?.precio ? String(Number(producto.precio)) : '',
+    precio_anterior: producto?.precio_anterior ? String(Number(producto.precio_anterior)) : '',
     stock: producto?.stock ?? 0,
     talla: producto?.talla ?? '',
     color: producto?.color ?? '',
@@ -78,6 +166,11 @@ function FormProducto({ api, producto, categorias, onGuardado, onCancelar, onErr
     if (datos.nombre.trim().length < 2) err.nombre = 'Escribe el nombre del producto'
     const precio = Number(datos.precio)
     if (datos.precio === '' || isNaN(precio) || precio < 0 || precio > 99999999.99) err.precio = 'Precio no válido'
+    if (datos.precio_anterior !== '') {
+      const anterior = Number(datos.precio_anterior)
+      if (isNaN(anterior) || anterior > 99999999.99) err.precio_anterior = 'Precio no válido'
+      else if (anterior <= precio) err.precio_anterior = 'Debe ser mayor que el precio actual'
+    }
     const stock = Number(datos.stock)
     if (datos.stock === '' || !Number.isInteger(stock) || stock < 0) err.stock = 'Debe ser un número entero, 0 o más'
     if (!datos.categoria) err.categoria = 'Selecciona una categoría'
@@ -115,18 +208,18 @@ function FormProducto({ api, producto, categorias, onGuardado, onCancelar, onErr
         <Campo label="Precio (COP)" error={errores.precio}>
           <input name="precio" type="number" min="0" step="0.01" value={datos.precio} onChange={cambiar} />
         </Campo>
+        <Campo label="Precio antes (opcional, para ponerlo en descuento)" error={errores.precio_anterior}>
+          <input name="precio_anterior" type="number" min="0" step="0.01" value={datos.precio_anterior} onChange={cambiar} placeholder="Vacío = sin descuento" />
+        </Campo>
         <Campo label="Stock" error={errores.stock}>
           <input name="stock" type="number" min="0" step="1" value={datos.stock} onChange={cambiar} />
-        </Campo>
-        <Campo label="Tallas (opcional, separadas por coma)">
-          <input name="talla" maxLength={20} value={datos.talla} onChange={cambiar} placeholder="S, M, L, XL" />
         </Campo>
         <Campo label="Color (opcional)">
           <input name="color" value={datos.color} onChange={cambiar} />
         </Campo>
         <Campo label="Categoría" error={errores.categoria}>
           <select name="categoria" value={datos.categoria} onChange={cambiar}>
-            {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            {categorias.map(c => <option key={c.id} value={c.id}>{nombreCompleto(c, categorias)}</option>)}
           </select>
         </Campo>
         <Campo label="Estado">
@@ -136,6 +229,12 @@ function FormProducto({ api, producto, categorias, onGuardado, onCancelar, onErr
           </select>
         </Campo>
       </div>
+
+      <SelectorTallas
+        valor={datos.talla}
+        onCambiar={(talla) => setDatos(prev => ({ ...prev, talla }))}
+        esHombre={/hombre/i.test(nombreCompleto(categorias.find(c => c.id === Number(datos.categoria)) ?? { nombre: '' }, categorias))}
+      />
 
       <Campo label="Imagen del producto" error={errores.imagen}>
         <input type="file" accept="image/*" onChange={elegirImagen} />
@@ -152,8 +251,16 @@ function FormProducto({ api, producto, categorias, onGuardado, onCancelar, onErr
   )
 }
 
-function FormCategoria({ api, categoria, onGuardado, onCancelar, onError }) {
-  const [datos, setDatos] = useState({ nombre: categoria?.nombre ?? '', descripcion: categoria?.descripcion ?? '' })
+function FormCategoria({ api, categoria, categorias, onGuardado, onCancelar, onError }) {
+  const [datos, setDatos] = useState({
+    nombre: categoria?.nombre ?? '',
+    descripcion: categoria?.descripcion ?? '',
+    padre: categoria?.padre ?? '',
+    orden: categoria?.orden ?? 0,
+  })
+  // Solo una categoría principal (y que no sea ella misma) puede ser "padre"
+  const posiblesPadres = categorias.filter(c => !c.padre && c.id !== categoria?.id)
+  const tieneSubcategorias = categoria && categorias.some(c => c.padre === categoria.id)
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
 
@@ -165,8 +272,9 @@ function FormCategoria({ api, categoria, onGuardado, onCancelar, onError }) {
     }
     setGuardando(true)
     try {
-      if (categoria) await api.patch(`/categorias/${categoria.id}/`, datos)
-      else await api.post('/categorias/', datos)
+      const envio = { ...datos, padre: datos.padre === '' ? null : Number(datos.padre), orden: Number(datos.orden) || 0 }
+      if (categoria) await api.patch(`/categorias/${categoria.id}/`, envio)
+      else await api.post('/categorias/', envio)
       onGuardado(categoria ? 'Categoría actualizada' : 'Categoría creada')
     } catch (err) {
       onError(mensajeError(err))
@@ -178,6 +286,19 @@ function FormCategoria({ api, categoria, onGuardado, onCancelar, onError }) {
     <form onSubmit={guardar} noValidate>
       <Campo label="Nombre" error={error}>
         <input value={datos.nombre} onChange={(e) => { setDatos({ ...datos, nombre: e.target.value }); setError('') }} />
+      </Campo>
+      <Campo label="Pertenece a">
+        <select
+          value={datos.padre}
+          onChange={(e) => setDatos({ ...datos, padre: e.target.value })}
+          disabled={tieneSubcategorias}
+        >
+          <option value="">— Ninguna (categoría principal del menú) —</option>
+          {posiblesPadres.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+        </select>
+      </Campo>
+      <Campo label="Orden en el menú (los números más bajos van primero)">
+        <input type="number" min="0" value={datos.orden} onChange={(e) => setDatos({ ...datos, orden: e.target.value })} />
       </Campo>
       <Campo label="Descripción (opcional)">
         <textarea rows="3" value={datos.descripcion} onChange={(e) => setDatos({ ...datos, descripcion: e.target.value })} />
@@ -192,22 +313,32 @@ function FormCategoria({ api, categoria, onGuardado, onCancelar, onError }) {
   )
 }
 
+// Pide categorías y productos al mismo tiempo
+const pedirDatos = (api) =>
+  Promise.all([api.get('/categorias/'), api.get('/productos/')])
+    .then(([cats, prods]) => ({ categorias: cats.data, productos: prods.data }))
+
 function Admin({ apiUrl, token, usuario, onSalir }) {
   const salirRef = useRef(onSalir)
-  salirRef.current = onSalir
+  useEffect(() => { salirRef.current = onSalir })
 
-  // Cliente de la API que envía el token del administrador; si el servidor responde 401, se cierra la sesión
-  const api = useMemo(() => {
-    const instancia = axios.create({ baseURL: apiUrl, headers: { Authorization: `Token ${token}` } })
-    instancia.interceptors.response.use(
+  // Cliente de la API que envía el token del administrador
+  const api = useMemo(
+    () => axios.create({ baseURL: apiUrl, headers: { Authorization: `Token ${token}` } }),
+    [apiUrl, token]
+  )
+
+  // Si el servidor responde 401 (token vencido o inválido), se cierra la sesión
+  useEffect(() => {
+    const id = api.interceptors.response.use(
       (respuesta) => respuesta,
       (error) => {
         if (error.response?.status === 401) salirRef.current()
         return Promise.reject(error)
       }
     )
-    return instancia
-  }, [apiUrl, token])
+    return () => api.interceptors.response.eject(id)
+  }, [api])
 
   const [pestana, setPestana] = useState('productos')
   const [productos, setProductos] = useState([])
@@ -219,22 +350,26 @@ function Admin({ apiUrl, token, usuario, onSalir }) {
   const [confirmar, setConfirmar] = useState(null) // { tipo, item }
   const [eliminando, setEliminando] = useState(false)
 
-  const cargar = useCallback(async () => {
-    try {
-      const [cats, prods] = await Promise.all([
-        api.get('/categorias/'),
-        api.get('/productos/'),
-      ])
-      setCategorias(cats.data)
-      setProductos(prods.data)
-    } catch (error) {
-      setAviso({ tipo: 'error', texto: mensajeError(error) })
-    } finally {
-      setCargando(false)
-    }
-  }, [api])
+  const cargar = useCallback(() =>
+    pedirDatos(api)
+      .then(datos => {
+        setCategorias(datos.categorias)
+        setProductos(datos.productos)
+      })
+      .catch(error => setAviso({ tipo: 'error', texto: mensajeError(error) }))
+      .finally(() => setCargando(false)),
+  [api])
 
-  useEffect(() => { cargar() }, [cargar])
+  // Carga inicial del panel
+  useEffect(() => {
+    pedirDatos(api)
+      .then(datos => {
+        setCategorias(datos.categorias)
+        setProductos(datos.productos)
+      })
+      .catch(error => setAviso({ tipo: 'error', texto: mensajeError(error) }))
+      .finally(() => setCargando(false))
+  }, [api])
 
   useEffect(() => {
     if (!aviso) return
@@ -242,7 +377,10 @@ function Admin({ apiUrl, token, usuario, onSalir }) {
     return () => clearTimeout(t)
   }, [aviso])
 
-  const nombreCategoria = (id) => categorias.find(c => c.id === id)?.nombre ?? '—'
+  const nombreCategoria = (id) => {
+    const cat = categorias.find(c => c.id === id)
+    return cat ? nombreCompleto(cat, categorias) : '—'
+  }
   const cuentaProductos = (id) => productos.filter(p => p.categoria === id).length
 
   const guardado = (texto) => {
@@ -327,7 +465,12 @@ function Admin({ apiUrl, token, usuario, onSalir }) {
                       <td>{p.imagen ? <img className="mini" src={p.imagen} alt={p.nombre} /> : <span className="mini mini-vacia">{p.nombre.charAt(0)}</span>}</td>
                       <td><strong>{p.nombre}</strong></td>
                       <td>{nombreCategoria(p.categoria)}</td>
-                      <td>{formatoPrecio(p.precio)}</td>
+                      <td>
+                        {formatoPrecio(p.precio)}
+                        {Number(p.precio_anterior) > Number(p.precio) && (
+                          <><br /><s className="precio-antes">{formatoPrecio(p.precio_anterior)}</s></>
+                        )}
+                      </td>
                       <td>{p.stock}</td>
                       <td><span className={`estado estado-${p.estado}`}>{p.estado}</span></td>
                       <td className="acciones">
@@ -350,13 +493,14 @@ function Admin({ apiUrl, token, usuario, onSalir }) {
             <div className="tabla-wrap">
               <table className="tabla">
                 <thead>
-                  <tr><th>Nombre</th><th>Descripción</th><th>Productos</th><th>Acciones</th></tr>
+                  <tr><th>Nombre</th><th>Pertenece a</th><th>Orden</th><th>Productos</th><th>Acciones</th></tr>
                 </thead>
                 <tbody>
                   {categorias.map(c => (
                     <tr key={c.id}>
                       <td><strong>{c.nombre}</strong></td>
-                      <td>{c.descripcion || '—'}</td>
+                      <td>{c.padre ? nombreCategoria(c.padre) : 'Principal'}</td>
+                      <td>{c.orden}</td>
                       <td>{cuentaProductos(c.id)}</td>
                       <td className="acciones">
                         <button className="btn-tabla" onClick={() => setModal({ tipo: 'categoria', item: c })}>Editar</button>
@@ -390,6 +534,7 @@ function Admin({ apiUrl, token, usuario, onSalir }) {
             <FormCategoria
               api={api}
               categoria={modal.item}
+              categorias={categorias}
               onGuardado={guardado}
               onCancelar={() => setModal(null)}
               onError={(texto) => setAviso({ tipo: 'error', texto })}
@@ -420,4 +565,4 @@ function Admin({ apiUrl, token, usuario, onSalir }) {
   )
 }
 
-export default Admin
+export default Admin

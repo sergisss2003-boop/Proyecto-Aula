@@ -1,0 +1,54 @@
+// Pie de página: enlaces
+@use '../abstractos' as *;
+
+.footer-col li a,
+.footer-link {
+  color: $gris-300;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-col li a:hover,
+.footer-link:hover {
+  color: $blanco;
+}
+
+.footer-social {
+  a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid $gris-700;
+    border-radius: 50%;
+    color: $gris-250;
+    transition: 0.2s;
+
+    &:hover {
+      color: $negro;
+      background: $blanco;
+      border-color: $blanco;
+    }
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.footer-col p.boletin-msg {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+}
+
+.boletin-msg {
+  &.ok {
+    color: #7bd88f;
+  }
+
+  &.error {
+    color: #ff8a8a;
+  }
+}

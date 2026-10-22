@@ -1,0 +1,258 @@
+// Páginas de ayuda
+@use '../abstractos' as *;
+
+.info-hero {
+  background-color: $negro;
+  background-image: linear-gradient(100deg, rgba(8, 8, 10, 0.85), rgba(8, 8, 10, 0.4)), url('../../assets/fondo-hero.svg');
+  background-size: cover;
+  background-position: center;
+  color: $blanco;
+  text-align: center;
+  padding: 4rem 1.5rem;
+
+  h1 {
+    margin: 0;
+    font-size: 2.6rem;
+    font-weight: 800;
+  }
+}
+
+.info-etiqueta {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.info-cuerpo {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 1rem;
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.info-menu {
+  position: sticky;
+  top: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  a {
+    padding: 0.75rem 1rem;
+    border-radius: $radio-md;
+    color: $gris-700;
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 600;
+
+    &:hover {
+      background: $gris-100;
+    }
+
+    &.activo {
+      background: $negro;
+      color: $blanco;
+    }
+  }
+}
+
+.info-contenido {
+  background: $blanco;
+  border-radius: 14px;
+  padding: 2rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+  min-height: 300px;
+}
+
+.faq-item {
+  border-bottom: 1px solid $gris-100;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.faq-pregunta {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 0;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+  color: $texto;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.faq-mas {
+  flex-shrink: 0;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #888;
+}
+
+.faq-respuesta {
+  margin: 0 0 1.2rem;
+  line-height: 1.65;
+  color: $gris-600;
+}
+
+.info-texto {
+  h3 {
+    margin: 1.6rem 0 0.6rem;
+    font-size: 1.1rem;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  p,
+  li {
+    line-height: 1.65;
+    color: $gris-600;
+  }
+}
+
+.info-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.92rem;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid $gris-100;
+  }
+
+  th {
+    background: #f4f4f4;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.contacto-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 2rem;
+}
+
+.contacto-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  input,
+  textarea {
+    padding: 0.75rem 0.9rem;
+    border: 1px solid $gris-250;
+    border-radius: $radio-md;
+    font-size: 0.95rem;
+    font-family: inherit;
+    font-weight: 400;
+    resize: vertical;
+  }
+
+  input:focus,
+  textarea:focus {
+    outline: none;
+    border-color: $negro;
+  }
+}
+
+.campo-error {
+  color: #c0392b;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.btn-info {
+  align-self: flex-start;
+  padding: 0.8rem 1.8rem;
+  background: $negro;
+  color: $blanco;
+  border: none;
+  border-radius: $radio-pildora;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+
+  &:hover {
+    background: $gris-800;
+  }
+}
+
+.contacto-datos {
+  background: #f6f6f6;
+  border-radius: $radio-lg;
+  padding: 1.4rem;
+  align-self: start;
+
+  h3 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+  }
+
+  p {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: $gris-600;
+    line-height: 1.5;
+  }
+}
+
+.contacto-ok {
+  text-align: center;
+  padding: 2rem 0;
+
+  p {
+    color: $gris-600;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-info {
+    align-self: center;
+  }
+}
+
+@include hasta($movil) {
+  .info-cuerpo {
+    grid-template-columns: 1fr;
+  }
+
+  .info-menu {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .contacto-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .navbar {
+    padding: 1rem 1.2rem;
+  }
+}

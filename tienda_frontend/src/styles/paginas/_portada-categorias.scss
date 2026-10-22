@@ -1,0 +1,53 @@
+// Secciones de portada
+@use '../abstractos' as *;
+
+.titulo-seccion {
+  text-align: center;
+  font-size: 1.7rem;
+  font-weight: 800;
+  margin: 0 0 1.8rem 0;
+}
+
+.categorias-seccion {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 0;
+}
+
+.categorias-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.2rem;
+  min-height: 220px;
+  padding: 1.1rem;
+  border-radius: 14px;
+  background-color: $gris-900;
+  background-image: linear-gradient(135deg, $texto, $azul);
+  background-size: cover;
+  background-position: center;
+  color: $blanco;
+  text-decoration: none;
+  transition: transform 0.25s, box-shadow 0.25s;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+  }
+
+  span {
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  small {
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+}
