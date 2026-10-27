@@ -4,7 +4,7 @@
   "description": "Tienda Studio SD: backend Django + frontend React. Comandos para automatizar el trabajo.",
   "type": "module",
   "scripts": {
-    "instalar": "npm install && npm install --prefix tienda_frontend && node scripts/python.mjs -m pip install -r requirements.txt",
+    "instalar": "npm install && npm install --prefix tienda_frontend && node scripts/python.mjs -m pip install -r requirements.txt -r requirements-dev.txt",
     "dev": "concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend\" \"npm:dev:frontend\"",
     "certificado": "node scripts/python.mjs scripts/crear_certificado.py",
     "dev:https": "concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend:https\" \"npm run dev:https --prefix tienda_frontend\"",
@@ -15,6 +15,8 @@
     "admin:crear": "node scripts/python.mjs manage.py createsuperuser",
     "revisar": "node scripts/python.mjs manage.py check && npm run lint --prefix tienda_frontend",
     "revisar:seguridad": "node scripts/python.mjs manage.py check --deploy",
+    "auditar": "node scripts/python.mjs -m pip_audit -r requirements.txt && npm audit --omit=dev --prefix tienda_frontend",
+    "pruebas": "node scripts/python.mjs manage.py test cuentas pedidos catalogo",
     "build": "npm run build --prefix tienda_frontend",
     "preview": "npm run build && concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend\" \"npm run preview --prefix tienda_frontend\""
   },

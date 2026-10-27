@@ -1,0 +1,2 @@
+# Herramientas de desarrollo (no se necesitan para correr la tienda)
+pip-audit==2.10.1

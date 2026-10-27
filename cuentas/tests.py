@@ -70,3 +70,33 @@ class CuentasTests(TestCase):
     def test_login_sin_token_csrf_es_rechazado(self):
         r = self.c.post('/api/auth/login/', json.dumps({'email': 'a', 'clave': 'b'}), content_type='application/json')
         self.assertEqual(r.status_code, 403)
+
+
+def vista_que_falla(request):
+    raise RuntimeError('detalle interno secreto: /ruta/del/servidor')
+
+
+from django.urls import include, path  # noqa: E402
+
+urlpatterns = [path('boom/', vista_que_falla), path('', include('tienda_backend.urls'))]
+handler404 = 'cuentas.errores.error_404'
+handler500 = 'cuentas.errores.error_500'
+
+
+from django.test import override_settings  # noqa: E402
+
+
+@override_settings(ROOT_URLCONF='cuentas.tests', DEBUG=False)
+class ErroresGenericosTests(TestCase):
+    def test_404_generico(self):
+        r = self.client.get('/no/existe/')
+        self.assertEqual(r.status_code, 404)
+        self.assertEqual(r.json(), {'error': 'No encontrado'})
+
+    def test_500_generico_sin_detalles(self):
+        c = Client(raise_request_exception=False)
+        with self.assertLogs('django.request', level='ERROR'):   # el detalle sí queda en el registro
+            r = c.get('/boom/')
+        self.assertEqual(r.status_code, 500)
+        self.assertEqual(r.json(), {'error': 'Error interno'})
+        self.assertNotIn(b'ruta', r.content)

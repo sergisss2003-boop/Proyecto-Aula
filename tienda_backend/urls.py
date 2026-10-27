@@ -31,4 +31,10 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Errores genéricos hacia afuera (sin trazas ni rutas); el detalle queda en el registro del servidor
+handler400 = 'cuentas.errores.error_400'
+handler403 = 'cuentas.errores.error_403'
+handler404 = 'cuentas.errores.error_404'
+handler500 = 'cuentas.errores.error_500'

@@ -259,3 +259,25 @@ JWT_COOKIE_SECURE = env_bool('JWT_COOKIE_SECURE', True)  # la cookie solo viaja 
 # Después de 5 intentos fallidos desde la misma IP, el login se bloquea 15 minutos (429).
 LOGIN_MAX_INTENTOS = int(env('LOGIN_MAX_INTENTOS', '5'))
 LOGIN_VENTANA_SEGUNDOS = 15 * 60
+
+# ---------------------------------------------------------------------------
+# REGISTROS (logging): el detalle de los errores y los eventos de seguridad
+# se escriben en la terminal del servidor, nunca en la respuesta al usuario.
+# ---------------------------------------------------------------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {'format': '[{asctime}] {levelname} {name}: {message}', 'style': '{', 'datefmt': '%Y-%m-%d %H:%M:%S'},
+    },
+    'handlers': {
+        'consola': {'class': 'logging.StreamHandler', 'formatter': 'simple'},
+    },
+    'loggers': {
+        'django': {'handlers': ['consola'], 'level': 'INFO'},
+        # Peticiones rechazadas por CSRF, hosts no permitidos, etc.
+        'django.security': {'handlers': ['consola'], 'level': 'WARNING', 'propagate': False},
+        # Logins fallidos, bloqueos por intentos y registros de usuarios (cuentas/views.py)
+        'cuentas': {'handlers': ['consola'], 'level': 'INFO', 'propagate': False},
+    },
+}

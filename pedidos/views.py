@@ -15,6 +15,7 @@ class PedidoViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, mixins.Retri
     """
     serializer_class = PedidoSerializer
     permission_classes = [IsAuthenticated]
+    queryset = Pedido.objects.none()  # solo para la documentación; la consulta real está en get_queryset
 
     def get_queryset(self):
         # Control de acceso (IDOR): la consulta SIEMPRE incluye al propietario, salvo para el administrador
