@@ -6,6 +6,7 @@ import Login from './Login'
 import Producto, { Precio, EtiquetaDescuento } from './Producto'
 import { tallasDe, descuentoDe } from './utils/producto'
 import Info from './Info'
+import MisPedidos from './MisPedidos'
 
 
 const quitarTildes = (texto) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
@@ -80,12 +81,13 @@ function App() {
   const esAdmin = sesion?.rol === 'admin'
   const vista = hash === '#/admin' && esAdmin
     ? 'admin'
+    : hash === '#/mis-pedidos' ? 'pedidos'
     : productoId ? 'producto' : seccionInfo ? 'info' : 'tienda'
 
   // Al abrir un producto o una página de ayuda, la página vuelve arriba
   useEffect(() => {
-    if (productoId || seccionInfo) window.scrollTo(0, 0)
-  }, [productoId, seccionInfo])
+    if (productoId || seccionInfo || vista === 'pedidos') window.scrollTo(0, 0)
+  }, [productoId, seccionInfo, vista])
 
   // --- Boletín del pie de página ---
   const [correoBoletin, setCorreoBoletin] = useState('')
@@ -115,7 +117,8 @@ function App() {
     setSesion(datos)
     setAcceso(null)
     setMenuUsuarioAbierto(false)
-    if (datos.rol === 'admin' && (siguiente === 'admin' || !siguiente)) window.location.hash = '#/admin'
+    if (siguiente === 'checkout') setCheckoutAbierto(true)
+    else if (datos.rol === 'admin' && (siguiente === 'admin' || !siguiente)) window.location.hash = '#/admin'
     else if (siguiente === 'admin') window.location.hash = ''
   }
 
@@ -131,7 +134,8 @@ function App() {
   const [buscadorAbierto, setBuscadorAbierto] = useState(false)
   const [busqueda, setBusqueda] = useState('')
 
-  // Cada vez que se vuelve a la tienda se recargan los datos, para reflejar lo hecho en el panel
+  // Cada vez que se vuelve a la tienda (o se termina una compra) se recargan los datos
+  const [recargas, setRecargas] = useState(0)
   useEffect(() => {
     if (vista === 'admin') return
     api.get('/categorias/')
@@ -141,7 +145,7 @@ function App() {
     api.get('/productos/')
       .then(response => setProductos(response.data))
       .catch(error => console.error('Error cargando productos:', error))
-  }, [vista])
+  }, [vista, recargas])
 
   // --- Categorías principales (Mujer, Hombre...) y sus subcategorías (Camisas, Jeans...) ---
   const principales = categorias.filter(c => !c.padre)
@@ -211,10 +215,15 @@ function App() {
     setCarritoAbierto(true)
   }
 
+  // Solo un usuario con sesión puede comprar (el servidor también lo exige: 401 sin sesión)
+  const pedirLoginParaComprar = (mensaje = 'Inicia sesión o crea una cuenta para finalizar tu compra.') =>
+    setAcceso({ mensaje, siguiente: 'checkout' })
+
   const comprarAhora = (prod, talla, cantidad) => {
     agregarAlCarrito(prod, talla, cantidad)
     setCarritoAbierto(false)
-    setCheckoutAbierto(true)
+    if (sesion) setCheckoutAbierto(true)
+    else pedirLoginParaComprar()
   }
 
   const cambiarCantidad = (clave, delta) => {
@@ -239,12 +248,20 @@ function App() {
 
   const abrirCheckout = () => {
     setCarritoAbierto(false)
-    setCheckoutAbierto(true)
+    if (sesion) setCheckoutAbierto(true)
+    else pedirLoginParaComprar()
   }
 
   const finalizarCompra = () => {
     setCarrito([])
     setCheckoutAbierto(false)
+    setRecargas(n => n + 1)  // el stock cambió
+  }
+
+  const sesionVencida = () => {
+    setCheckoutAbierto(false)
+    setSesion(null)
+    pedirLoginParaComprar('Tu sesión venció. Inicia sesión de nuevo para terminar tu compra.')
   }
 
   const totalItems = carrito.reduce((suma, item) => suma + item.cantidad, 0)
@@ -357,6 +374,7 @@ function App() {
               {sesion && menuUsuarioAbierto && (
                 <div className="menu-usuario">
                   <p>Hola, <strong>{sesion.nombre}</strong></p>
+                  <a href="#/mis-pedidos" onClick={() => setMenuUsuarioAbierto(false)}>{esAdmin ? 'Todos los pedidos' : 'Mis pedidos'}</a>
                   {esAdmin && <a href="#/admin" onClick={() => setMenuUsuarioAbierto(false)}>Panel de administración</a>}
                   <button onClick={cerrarSesion}>Cerrar sesión</button>
                 </div>
@@ -414,6 +432,8 @@ function App() {
         })()
       ) : vista === 'info' ? (
         <Info seccion={seccionInfo} />
+      ) : vista === 'pedidos' ? (
+        <MisPedidos sesion={sesion} esAdmin={esAdmin} formatoPrecio={formatoPrecio} onPedirLogin={() => setAcceso({})} />
       ) : (
       <>
       <header className="hero">
@@ -698,8 +718,10 @@ function App() {
           items={carrito}
           subtotal={totalCarrito}
           formatoPrecio={formatoPrecio}
+          sesion={sesion}
           onCerrar={() => setCheckoutAbierto(false)}
           onFinalizar={finalizarCompra}
+          onSesionVencida={sesionVencida}
         />
       )}
     </div>

@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'catalogo',
     'cuentas',            # registro, login con JWT en cookie, roles
+    'pedidos',            # pedidos de los clientes (cada uno ve solo los suyos)
     'django_extensions',  # runserver_plus: servidor de desarrollo con HTTPS
 ]
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { api, mensajeDeError } from './api'
 
 const DEPARTAMENTOS = [
   'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bogotá D.C.', 'Bolívar', 'Boyacá', 'Caldas',
@@ -32,14 +33,15 @@ function Campo({ label, error, children }) {
   )
 }
 
-function Checkout({ items, subtotal, formatoPrecio, onCerrar, onFinalizar }) {
+function Checkout({ items, subtotal, formatoPrecio, sesion, onCerrar, onFinalizar, onSesionVencida }) {
   const [paso, setPaso] = useState(1)
   const [procesando, setProcesando] = useState(false)
   const [pedido, setPedido] = useState(null)
   const [errores, setErrores] = useState({})
+  const [errorPedido, setErrorPedido] = useState('')
 
   const [envio, setEnvio] = useState({
-    nombre: '', email: '', telefono: '', departamento: '', ciudad: '', direccion: '', indicaciones: '',
+    nombre: sesion?.nombre ?? '', email: sesion?.email ?? '', telefono: '', departamento: '', ciudad: '', direccion: '', indicaciones: '',
   })
   const [metodoEnvio, setMetodoEnvio] = useState('estandar')
   const [pago, setPago] = useState({ numero: '', titular: '', vence: '', cvv: '' })
@@ -103,26 +105,43 @@ function Checkout({ items, subtotal, formatoPrecio, onCerrar, onFinalizar }) {
     if (validarEnvio()) setPaso(2)
   }
 
-  const pagar = (e) => {
+  const pagar = async (e) => {
     e.preventDefault()
     if (!validarPago()) return
     setProcesando(true)
-    // Pago simulado: no se contacta ninguna pasarela ni se guardan datos de la tarjeta.
-    setTimeout(() => {
-      setPedido({
-        numero: `SD-${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 90 + 10)}`,
-        fecha: new Date().toLocaleString('es-CO'),
-        items,
-        envio: { ...envio },
-        metodo: ENVIOS[metodoEnvio],
-        subtotal,
-        costoEnvio,
-        total,
-        tarjeta: { marca: marcaTarjeta(pago.numero), ultimos4: pago.numero.replace(/\s/g, '').slice(-4) },
+    setErrorPedido('')
+    // Pago simulado: no se contacta ninguna pasarela. Al servidor solo viajan la marca y los
+    // últimos 4 dígitos de la tarjeta (nunca el número completo ni el CVV).
+    // Tampoco se envían precios ni totales: el servidor los calcula con su base de datos.
+    try {
+      const { data } = await api.post('/pedidos/', {
+        ...envio,
+        telefono: envio.telefono.replace(/\s/g, ''),
+        metodo_envio: metodoEnvio,
+        tarjeta_marca: marcaTarjeta(pago.numero),
+        tarjeta_ultimos4: pago.numero.replace(/\s/g, '').slice(-4),
+        items: items.map(item => ({ producto: item.id, talla: item.talla, cantidad: item.cantidad })),
       })
-      setProcesando(false)
+      setPedido({
+        numero: data.numero,
+        fecha: new Date(data.creado).toLocaleString('es-CO'),
+        items: data.detalle.map((d, i) => ({ clave: i, nombre: d.nombre, talla: d.talla, cantidad: d.cantidad, total: Number(d.subtotal) })),
+        envio: { ...envio },
+        metodo: ENVIOS[data.metodo_envio],
+        subtotal: Number(data.subtotal),
+        costoEnvio: Number(data.costo_envio),
+        total: Number(data.total),
+        tarjeta: { marca: data.tarjeta_marca, ultimos4: data.tarjeta_ultimos4 },
+      })
       setPaso(3)
-    }, 1800)
+    } catch (err) {
+      if (err.response?.status === 401) return onSesionVencida()
+      const datos = err.response?.data
+      const detalle = datos && typeof datos === 'object' ? Object.values(datos).flat().join(' ') : ''
+      setErrorPedido(detalle || mensajeDeError(err, 'No pudimos registrar tu pedido.'))
+    } finally {
+      setProcesando(false)
+    }
   }
 
   const cerrar = () => (paso === 3 ? onFinalizar() : onCerrar())
@@ -142,8 +161,8 @@ function Checkout({ items, subtotal, formatoPrecio, onCerrar, onFinalizar }) {
           <div className="confirmacion">
             <div className="confirmacion-check">✓</div>
             <h2>¡Gracias por tu compra, {pedido.envio.nombre.split(' ')[0]}!</h2>
-            <p>Tu pedido <strong>{pedido.numero}</strong> fue recibido el {pedido.fecha}.</p>
-            <p>Enviaremos la confirmación a <strong>{pedido.envio.email}</strong>.</p>
+            <p>Tu pedido <strong>{pedido.numero}</strong> fue recibido ({pedido.fecha})</p>
+            <p>Enviaremos la confirmación a <strong>{pedido.envio.email}</strong>. Puedes verlo en <a href="#/mis-pedidos" onClick={onFinalizar}>Mis pedidos</a>.</p>
 
             <div className="confirmacion-grid">
               <div>
@@ -169,7 +188,7 @@ function Checkout({ items, subtotal, formatoPrecio, onCerrar, onFinalizar }) {
               {pedido.items.map(item => (
                 <li key={item.clave}>
                   <span>{item.cantidad} × {item.nombre}{item.talla ? ` (Talla ${item.talla})` : ''}</span>
-                  <span>{formatoPrecio(item.precio * item.cantidad)}</span>
+                  <span>{formatoPrecio(item.total)}</span>
                 </li>
               ))}
             </ul>
@@ -251,8 +270,9 @@ function Checkout({ items, subtotal, formatoPrecio, onCerrar, onFinalizar }) {
                     </Campo>
                   </div>
 
+                  {errorPedido && <div className="aviso aviso-error">{errorPedido}</div>}
                   <div className="checkout-botones">
-                    <button type="button" className="btn-secundario" onClick={() => { setErrores({}); setPaso(1) }} disabled={procesando}>Volver</button>
+                    <button type="button" className="btn-secundario" onClick={() => { setErrores({}); setErrorPedido(''); setPaso(1) }} disabled={procesando}>Volver</button>
                     <button type="submit" className="btn-principal" disabled={procesando}>
                       {procesando ? 'Procesando pago...' : `Pagar ${formatoPrecio(total)}`}
                     </button>

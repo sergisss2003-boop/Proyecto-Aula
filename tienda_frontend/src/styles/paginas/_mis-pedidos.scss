@@ -1,0 +1,81 @@
+// Página "Mis pedidos" (y "Todos los pedidos" para el administrador)
+@use '../abstractos' as *;
+
+.mis-pedidos {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+
+  h1 {
+    margin: 0 0 1.5rem;
+  }
+}
+
+.mis-pedidos-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  color: $gris-600;
+}
+
+.pedidos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.pedido-tarjeta {
+  padding: 1.2rem 1.4rem;
+  border-radius: $radio-xl;
+  background: $blanco;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.pedido-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+
+  small {
+    display: block;
+    margin-top: 0.2rem;
+    color: $gris-500;
+  }
+}
+
+.pedido-estado {
+  padding: 0.25rem 0.7rem;
+  border-radius: $radio-pildora;
+  background: $gris-100;
+  font-size: 0.8rem;
+  font-weight: 700;
+
+  &.estado-recibido {
+    background: $azul-claro;
+    color: $azul;
+  }
+
+  &.estado-entregado {
+    background: $verde-ok-fondo;
+    color: $verde-ok;
+  }
+}
+
+.pedido-pie {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  color: $gris-600;
+  font-size: 0.9rem;
+
+  strong {
+    color: $negro;
+  }
+}
