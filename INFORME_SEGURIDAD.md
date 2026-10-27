@@ -35,7 +35,7 @@ Revisión de `settings.py`: `DEBUG = True` (por defecto, desde `.env`) → **sí
 
 | # | Hallazgo | OWASP | Evidencia (cómo lo comprobé) | Corrección aplicada | Estado |
 |---|---|---|---|---|---|
-| 1 | La contraseña de la base de datos y la `SECRET_KEY` original están en el historial de GitHub | A04 / A02 | `git log --all -p -S"12345678"` muestra el commit `c35dfc1` | Secretos movidos a `.env` (ignorado por git), `SECRET_KEY` nueva. Falta rotar la contraseña de PostgreSQL | Mitigado |
+| 1 | La contraseña de la base de datos y la `SECRET_KEY` original están en el historial de GitHub | A04 / A02 | `git log --all -p -S"12345678"` muestra el commit `c35dfc1` | Secretos movidos a `.env` (ignorado por git) y **rotados**: `SECRET_KEY` nueva y contraseña de PostgreSQL cambiada con `ALTER USER postgres PASSWORD ...` (27/10/2026). La contraseña publicada ya no sirve. Comprobado: con la clave vieja la conexión es rechazada y con la nueva (solo en `.env`) las 27 pruebas pasan | Corregido |
 | 2 | El sitio se sirve solo por HTTP | A04 | Se abre con `http://127.0.0.1:8000` | Certificado de desarrollo (`npm run certificado`: mkcert o autofirmado), `runserver_plus` en `https://localhost:8443`, `SECURE_SSL_REDIRECT`, cookies `Secure`, HSTS de 300 s, `nosniff` y `Referrer-Policy: same-origin`. `certs/` y `*.pem` en `.gitignore`. Comprobado: la respuesta trae `Strict-Transport-Security: max-age=300` y una petición http recibe `301` a https | Corregido |
 | 3 | El token del administrador se guarda en `sessionStorage`, legible desde JavaScript | A07 | `sessionStorage.getItem('sesionAdmin')` en la consola devuelve el token | Login nuevo (`cuentas/`): token **JWT firmado (HS256) que vence en 15 min**, en una cookie `HttpOnly` + `Secure` + `SameSite=Strict`. Comprobado: en *F12 → Application → Cookies* la cookie `token` tiene las tres banderas y `document.cookie` **no** la muestra. Token alterado o con `alg: none` → 401 | Corregido |
 | 4 | No existe registro de clientes ni roles distintos de admin | A07 / A01 | No hay rutas de registro; solo login de administrador | `POST /api/auth/registro/`: correo y contraseña validados en el servidor (mínimo 10 caracteres + validadores de Django), contraseña guardada con hash `pbkdf2_sha256$...`. El rol lo asigna el servidor (siempre `cliente`). Roles en la Parte 3 | Corregido |
@@ -68,7 +68,7 @@ Ran 27 tests ... OK
 | A01 Control de acceso roto | ¿Cada ruta verifica rol **y** propietario en el servidor? | **Sí.** Productos y categorías: escribir solo `is_staff` (cliente → 403). Pedidos: la consulta filtra por dueño (otro → 404). Panel `#/admin` también protegido en el servidor | Parte 3 (hallazgo 9), Parte 5 (hallazgo 11) |
 | A02 Configuración insegura | ¿CORS, DEBUG, base de datos y cabeceras están bien? | **Sí.** CORS solo con los orígenes del frontend, `DEBUG` desde `.env`, CSP y cabeceras de seguridad, `check --deploy`: 8 → 2. Pendiente: usuario de BD con permisos mínimos (riesgo R2) | Partes 4 y 6 |
 | A03 Cadena de suministro | ¿Se auditaron las dependencias? | **Sí.** `pip-audit` y `npm audit` en 0 tras actualizar Pillow y follow-redirects; versiones fijas | Parte 6.5 (hallazgo 6) |
-| A04 Fallas criptográficas | ¿HTTPS activo? ¿Contraseñas con hash lento? ¿Secretos fuera del código? | **Sí.** HTTPS con HSTS, PBKDF2, secretos en `.env`. Los secretos viejos del historial: `SECRET_KEY` rotada; **falta rotar la contraseña de PostgreSQL** | Partes 1, 2 y 6 (hallazgos 1 y 2) |
+| A04 Fallas criptográficas | ¿HTTPS activo? ¿Contraseñas con hash lento? ¿Secretos fuera del código? | **Sí.** HTTPS con HSTS, PBKDF2, secretos en `.env`. Los secretos que quedaron en el historial se **rotaron** (`SECRET_KEY` y contraseña de PostgreSQL) | Partes 1, 2 y 6 (hallazgos 1 y 2) |
 | A05 Inyección (incluye XSS) | ¿Salida escapada y entradas validadas por tipo? | **Sí.** React escapa, el servidor limpia HTML y valida tipos (serializers), CSP. El ORM de Django usa consultas parametrizadas (sin SQL armado a mano) | Partes 2 y 4 (hallazgo 10) |
 | A06 Diseño inseguro | ¿Hay lógica que se pueda abusar? | **Corregido.** Ver pruebas 7.1: cantidad negativa → 400, precio/total enviados por el cliente se ignoran, stock con bloqueo | Parte 7.1 (hallazgo 5) |
 | A07 Fallas de autenticación | ¿Límite de intentos, mensajes genéricos, tokens con vencimiento? | **Sí.** 5 intentos/15 min (429), mensaje único, JWT de 15 min en cookie HttpOnly | Parte 2 (hallazgos 3, 4 y 8) |
@@ -90,7 +90,7 @@ Ejecutadas contra la aplicación (respuestas reales):
 
 | # | Riesgo | Probabilidad | Impacto | Tratamiento |
 |---|---|---|---|---|
-| R1 | La contraseña de PostgreSQL (`12345678`) sigue publicada en el historial del repositorio público hasta que se cambie | **Alta** (el repositorio es público) | **Medio** (la BD solo escucha en `localhost`, pero la contraseña es débil y puede reutilizarse) | **Mitigar:** cambiar la contraseña ya (`ALTER USER postgres PASSWORD '...'`) y actualizar `.env`; activar *secret scanning* en GitHub |
+| R1 | Los secretos viejos siguen visibles en el historial público (ya no sirven) y alguien podría volver a subir un secreto por error | Media | Medio | **Mitigar:** activar *secret scanning* y *push protection* en GitHub y una revisión antes de cada commit (`pre-commit`); opcionalmente limpiar el historial con `git filter-repo` |
 | R2 | La aplicación se conecta con el superusuario `postgres` | Baja | **Alto** (si se compromete la app, se compromete todo el servidor de BD) | **Mitigar:** crear un usuario `tienda_app` con permisos solo sobre la base `tienda_studio_sd` |
 | R3 | El límite de intentos vive en la memoria del servidor y es por IP (se reinicia al reiniciar; un ataque desde muchas IP lo evade) y los registros solo se ven en la terminal | Media | Medio | **Mitigar:** Redis para el límite, límite también por cuenta, registros centralizados con alertas |
 | R4 | El registro no pide la **autorización expresa** para tratar datos personales (Ley 1581) ni hay política de retención | Media | Medio (sanciones de la SIC) | **Mitigar:** casilla de autorización con enlace a la política de privacidad y plazo de borrado de pedidos antiguos |
@@ -98,7 +98,7 @@ Ejecutadas contra la aplicación (respuestas reales):
 
 ## Plan ante un incidente: se filtra la cadena de conexión de la base de datos
 
-(El equivalente en nuestro proyecto a la cadena de Atlas: `DB_USER`, `DB_PASSWORD`, `DB_HOST` de PostgreSQL. **Ya ocurrió**: la contraseña quedó en el historial público.)
+(El equivalente en nuestro proyecto a la cadena de Atlas: `DB_USER`, `DB_PASSWORD`, `DB_HOST` de PostgreSQL. **Ya ocurrió**: la contraseña quedó en el historial público; aplicamos la contención cambiándola el 27/10/2026.)
 
 1. **Preparación:** secretos solo en `.env`; `.env.example` sin valores; responsables definidos (quién cambia la contraseña, quién avisa); copia de seguridad de la BD (`pg_dump`) y registros activos.
 2. **Detección y análisis:** alerta de *secret scanning* de GitHub o hallazgo manual (`git log --all -p -S"PASSWORD"`). Revisar desde cuándo está expuesta, qué permisos tiene ese usuario y si hay conexiones o cambios sospechosos en los registros de PostgreSQL.
@@ -134,7 +134,7 @@ Por **defensa en profundidad**: si una capa falla, la otra protege. **Navegadore
 ## Cierre
 
 **1. ¿Cuál fue el hallazgo más grave y por qué?**
-Las credenciales en el historial de un **repositorio público** (hallazgo 1): la contraseña de la base de datos y la `SECRET_KEY` quedaron visibles para cualquiera desde el 29 de septiembre. Con la `SECRET_KEY` se pueden falsificar firmas de Django, y borrar el archivo no basta porque el historial y las copias ya existen; hay que rotarlas.
+Las credenciales en el historial de un **repositorio público** (hallazgo 1): la contraseña de la base de datos y la `SECRET_KEY` quedaron visibles para cualquiera desde el 29 de septiembre. Con la `SECRET_KEY` se pueden falsificar firmas de Django, y borrar el archivo no basta porque el historial y las copias ya existen: por eso las rotamos (nueva `SECRET_KEY` y nueva contraseña de PostgreSQL).
 
 **2. ¿Qué defensa habría evitado el caso de la clase que más los impactó?**
 El de **Uber (2016)**, porque es el mismo error que tuvimos: credenciales guardadas en un repositorio de código. Lo habría evitado mantener los secretos fuera del código (variables de entorno o un gestor de secretos), escanear automáticamente los commits en busca de secretos, MFA en las cuentas de los desarrolladores y rotar las credenciales apenas se detecta la fuga.
