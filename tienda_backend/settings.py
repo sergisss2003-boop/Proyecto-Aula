@@ -15,6 +15,7 @@ from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.csp import CSP
+import dj_database_url
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -54,6 +55,13 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = env_lista('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
+# En Render: dominio del servicio (por ejemplo studio-sd.onrender.com). Render lo pone solo.
+RENDER_HOST = env('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_HOST:
+    ALLOWED_HOSTS.append(RENDER_HOST)
+# Detrás del proxy de Render la IP del cliente llega en X-Forwarded-For (ver cuentas/seguridad.py)
+DETRAS_DE_PROXY = env_bool('DJANGO_DETRAS_DE_PROXY', bool(RENDER_HOST))
+
 
 # Application definition
 
@@ -76,6 +84,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # sirve los estáticos y la tienda React compilada
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -108,18 +117,25 @@ WSGI_APPLICATION = 'tienda_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME', 'tienda_studio_sd'),
-        'USER': env('DB_USER', 'postgres'),
-        'PASSWORD': env('DB_PASSWORD'),
-        'HOST': env('DB_HOST', 'localhost'),
-        'PORT': env('DB_PORT', '5432'),
+if env('DATABASE_URL'):
+    # Producción (Render + Neon): toda la conexión viene en una sola variable, con SSL obligatorio
+    DATABASES = {
+        'default': dj_database_url.parse(env('DATABASE_URL'), conn_max_age=600,
+                                         conn_health_checks=True, ssl_require=env_bool('DB_SSL', True)),
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('DB_NAME', 'tienda_studio_sd'),
+            'USER': env('DB_USER', 'postgres'),
+            'PASSWORD': env('DB_PASSWORD'),
+            'HOST': env('DB_HOST', 'localhost'),
+            'PORT': env('DB_PORT', '5432'),
+        }
+    }
 
-if DATABASES['default']['PASSWORD'] is None:
+if not env('DATABASE_URL') and DATABASES['default']['PASSWORD'] is None:
     raise ImproperlyConfigured(
         'Falta DB_PASSWORD. Crea el archivo .env (copia .env.example) y escribe la contraseña de PostgreSQL.'
     )
@@ -160,6 +176,25 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'      # aquí deja "collectstatic" los archivos para WhiteNoise
+
+# La tienda React compilada (npm run build) la sirve Django en la raíz del sitio, así la tienda
+# y la API quedan en el MISMO dominio: las cookies SameSite=Strict y la protección CSRF funcionan.
+FRONTEND_DIST = BASE_DIR / 'tienda_frontend' / 'dist'
+if FRONTEND_DIST.exists():
+    WHITENOISE_ROOT = FRONTEND_DIST
+    WHITENOISE_INDEX_FILE = True
+
+# Imágenes de productos: en el computador se guardan en media/; en Render, en Cloudinary
+# (el disco de Render se borra en cada reinicio). Ver tienda_backend/almacenamiento.py
+USAR_CLOUDINARY = env_bool('USAR_CLOUDINARY', bool(RENDER_HOST))
+STORAGES = {
+    'default': {
+        'BACKEND': 'tienda_backend.almacenamiento.CloudinaryStorage' if USAR_CLOUDINARY
+        else 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
 
 
 # Email
@@ -201,6 +236,8 @@ CSRF_TRUSTED_ORIGINS = env_lista(
     'DJANGO_CSRF_TRUSTED_ORIGINS',
     'http://localhost:5173,https://localhost:5173,http://127.0.0.1:5173,https://localhost:8443,https://127.0.0.1:8443',
 )
+if RENDER_HOST:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_HOST}')
 # SameSite=Lax: el navegador no envía las cookies cuando la petición la inicia otro sitio web.
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Strict'   # la cookie csrftoken nunca viaja en peticiones iniciadas por otro sitio
@@ -237,12 +274,30 @@ SECURE_CSP = {
     'default-src': [CSP.SELF],
     'script-src': [CSP.SELF, 'https://cdn.jsdelivr.net'],  # jsdelivr: Swagger (/api/docs/)
     'style-src': [CSP.SELF, CSP.UNSAFE_INLINE, 'https://cdn.jsdelivr.net'],  # Swagger usa estilos en línea
-    'img-src': [CSP.SELF, 'data:', 'https://cdn.jsdelivr.net'],
+    'img-src': [CSP.SELF, 'data:', 'https://cdn.jsdelivr.net', 'https://res.cloudinary.com'],
     'object-src': [CSP.NONE],
     'base-uri': [CSP.SELF],
     'form-action': [CSP.SELF],
     'frame-ancestors': [CSP.NONE],
 }
+
+# La tienda React (index.html) la entrega WhiteNoise antes de llegar al middleware de CSP,
+# así que sus cabeceras de seguridad se agregan aquí.
+CSP_TIENDA = (
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: blob: https://res.cloudinary.com; font-src 'self' data:; connect-src 'self'; "
+    "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+)
+
+
+def cabeceras_tienda(headers, path, url):
+    headers['X-Frame-Options'] = 'DENY'
+    if path.endswith('.html'):
+        headers['Content-Security-Policy'] = CSP_TIENDA
+        headers['Cache-Control'] = 'no-cache'  # que el navegador siempre pida la versión nueva
+
+
+WHITENOISE_ADD_HEADERS_FUNCTION = cabeceras_tienda
 
 # --- Token de sesión (JWT) ---
 # Secreto con el que se firman los tokens. Es distinto de SECRET_KEY y es obligatorio.

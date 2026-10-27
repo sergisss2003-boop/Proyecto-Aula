@@ -1,0 +1,29 @@
+# Blueprint de Render: crea el servicio web de la tienda con un clic.
+# Render -> New -> Blueprint -> elegir este repositorio.
+services:
+  - type: web
+    name: studio-sd
+    runtime: python
+    plan: free
+    branch: main
+    buildCommand: bash build.sh
+    # 1 proceso con 4 hilos: cabe en la memoria del plan gratis y el límite de intentos de login
+    # (que vive en la memoria del proceso) se comparte entre todas las peticiones
+    startCommand: gunicorn tienda_backend.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true      # Render genera un valor aleatorio largo
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL        # cadena de conexión de Neon (se pega en el panel)
+        sync: false
+      - key: CLOUDINARY_URL      # credenciales de Cloudinary (se pegan en el panel)
+        sync: false
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false

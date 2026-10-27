@@ -58,26 +58,38 @@ def poner_cookie(respuesta, user):
 # --- Límite de intentos de login ---------------------------------------------------------
 
 def ip_de(request):
+    """IP del cliente. Detrás de un proxy (Render) todas las peticiones llegan desde la IP del proxy,
+    así que se usa la primera de X-Forwarded-For. Ese dato lo puede falsear el cliente; por eso el
+    límite también se cuenta por cuenta de usuario (ver _claves_intentos)."""
+    if settings.DETRAS_DE_PROXY:
+        reenviada = request.META.get('HTTP_X_FORWARDED_FOR', '')
+        if reenviada:
+            return reenviada.split(',')[0].strip()[:45]
     return request.META.get('REMOTE_ADDR', '?')
 
 
-def _clave_intentos(request):
-    return 'login-fallidos:' + ip_de(request)
+def _claves_intentos(request, usuario):
+    # Dos contadores: por IP (frena a quien prueba muchas cuentas) y por cuenta
+    # (frena a quien prueba muchas contraseñas contra el mismo correo, aunque cambie de IP)
+    return ['login-fallidos:ip:' + ip_de(request),
+            'login-fallidos:cuenta:' + usuario.strip().lower()[:150]]
 
 
-def limitado(request):
-    """True si esta IP ya tiene LOGIN_MAX_INTENTOS fallidos en la ventana de tiempo."""
-    return cache.get(_clave_intentos(request), 0) >= settings.LOGIN_MAX_INTENTOS
+def limitado(request, usuario=''):
+    """True si la IP o la cuenta ya tienen LOGIN_MAX_INTENTOS fallidos en la ventana de tiempo."""
+    return any(cache.get(c, 0) >= settings.LOGIN_MAX_INTENTOS for c in _claves_intentos(request, usuario))
 
 
-def registrar_fallo(request):
-    clave = _clave_intentos(request)
-    cache.add(clave, 0, settings.LOGIN_VENTANA_SEGUNDOS)  # empieza la ventana con el primer fallo
-    return cache.incr(clave)
+def registrar_fallo(request, usuario=''):
+    intentos = 0
+    for clave in _claves_intentos(request, usuario):
+        cache.add(clave, 0, settings.LOGIN_VENTANA_SEGUNDOS)  # la ventana empieza con el primer fallo
+        intentos = max(intentos, cache.incr(clave))
+    return intentos
 
 
-def limpiar_fallos(request):
-    cache.delete(_clave_intentos(request))
+def limpiar_fallos(request, usuario=''):
+    cache.delete_many(_claves_intentos(request, usuario))
 
 
 # --- Proteger vistas de Django con el token ---------------------------------------------------

@@ -13,7 +13,7 @@ const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'", // React usa style={{...}} para las imágenes de fondo
-  "img-src 'self' data: blob:",      // blob: vista previa de la imagen en el panel de admin
+  "img-src 'self' data: blob: https://res.cloudinary.com", // blob: vista previa en el admin; Cloudinary: fotos en producción
   "font-src 'self' data:",
   "connect-src 'self'",
   "object-src 'none'",

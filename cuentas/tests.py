@@ -60,6 +60,16 @@ class CuentasTests(TestCase):
         codigos = [self.post('/api/auth/login/', {'email': 'x@x.com', 'clave': 'mala'}).status_code for _ in range(6)]
         self.assertEqual(codigos, [401] * 5 + [429])
 
+    def test_limite_por_cuenta_aunque_cambie_la_ip(self):
+        # Un atacante que cambia de IP en cada intento igual queda bloqueado para esa cuenta
+        User.objects.create_user('victima@x.com', 'victima@x.com', CLAVE)
+        codigos = []
+        for i in range(6):
+            r = self.c.post('/api/auth/login/', json.dumps({'email': 'victima@x.com', 'clave': 'mala'}),
+                            content_type='application/json', HTTP_X_CSRFTOKEN=self.csrf, REMOTE_ADDR=f'10.0.0.{i}')
+            codigos.append(r.status_code)
+        self.assertEqual(codigos, [401] * 5 + [429])
+
     def test_ruta_privada_sin_sesion_responde_401(self):
         self.assertEqual(self.c.get('/api/auth/yo/').status_code, 401)
 

@@ -18,7 +18,9 @@
     "auditar": "node scripts/python.mjs -m pip_audit -r requirements.txt && npm audit --omit=dev --prefix tienda_frontend",
     "pruebas": "node scripts/python.mjs manage.py test cuentas pedidos catalogo",
     "build": "npm run build --prefix tienda_frontend",
-    "preview": "npm run build && concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend\" \"npm run preview --prefix tienda_frontend\""
+    "preview": "npm run build && concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend\" \"npm run preview --prefix tienda_frontend\"",
+    "exportar-catalogo": "node scripts/python.mjs -X utf8 manage.py dumpdata catalogo --indent 2 -o catalogo/fixtures/catalogo_inicial.json",
+    "subir-imagenes": "node scripts/python.mjs manage.py subir_imagenes"
   },
   "devDependencies": {
     "concurrently": "^10.0.6"

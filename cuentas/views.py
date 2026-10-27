@@ -65,24 +65,25 @@ def registro_view(request):
 
 @require_POST
 def login_view(request):
-    if limitado(request):
-        registro.warning('Login bloqueado por demasiados intentos (IP %s)', ip_de(request))
-        return JsonResponse({'error': 'Demasiados intentos. Espera 15 minutos.'}, status=429)
-
     d = _datos(request)
     usuario = str(d.get('email', '')).strip()
     clave = str(d.get('clave', ''))
+
+    if limitado(request, usuario):
+        registro.warning('Login bloqueado por demasiados intentos (IP %s, cuenta "%s")', ip_de(request), usuario[:150])
+        return JsonResponse({'error': 'Demasiados intentos. Espera 15 minutos.'}, status=429)
+
     # Primero tal cual (usuarios administradores) y luego en minúsculas (correos de clientes)
     user = authenticate(request, username=usuario, password=clave) or \
         authenticate(request, username=usuario.lower(), password=clave)
 
     if user is None:
-        intentos = registrar_fallo(request)
+        intentos = registrar_fallo(request, usuario)
         registro.warning('Login fallido para "%s" (IP %s, intento %s)', usuario[:150], ip_de(request), intentos)
         # Mensaje genérico: no dice si falló el correo o la contraseña (evita adivinar correos)
         return JsonResponse({'error': 'Usuario o contraseña incorrectos.'}, status=401)
 
-    limpiar_fallos(request)
+    limpiar_fallos(request, usuario)
     registro.info('Login correcto: %s (%s)', user.username, rol_de(user))
     resp = JsonResponse({'ok': True, **_perfil(user)})
     poner_cookie(resp, user)

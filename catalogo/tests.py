@@ -58,3 +58,25 @@ class XssYCsrfTests(TestCase):
     def test_cookie_csrf_es_strict(self):
         r = Client().get('/api/auth/csrf/')
         self.assertEqual(r.cookies['csrftoken']['samesite'], 'Strict')
+
+
+class CloudinaryStorageTests(TestCase):
+    """El almacenamiento de producción guarda cada imagen con un identificador fijo en Cloudinary."""
+
+    def test_nombre_y_url(self):
+        from unittest import mock
+
+        from django.core.files.base import ContentFile
+
+        from tienda_backend.almacenamiento import CloudinaryStorage, id_publico
+        self.assertEqual(id_publico('productos/jean.webp'), 'studio-sd/productos/jean')
+        almacen = CloudinaryStorage()
+        with mock.patch('cloudinary.uploader.upload') as subir, \
+                mock.patch('cloudinary.config', return_value=mock.Mock(cloud_name='demo')):
+            nombre = almacen._save('productos/jean.webp', ContentFile(b'imagen'))
+        self.assertEqual(nombre, 'productos/jean.webp')
+        self.assertEqual(subir.call_args.kwargs['public_id'], 'studio-sd/productos/jean')
+        import cloudinary
+        cloudinary.config(cloud_name='demo')
+        self.assertTrue(almacen.url(nombre).startswith('https://res.cloudinary.com/demo/image/upload/'))
+        self.assertTrue(almacen.url(nombre).endswith('studio-sd/productos/jean.webp'))

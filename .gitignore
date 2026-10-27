@@ -17,6 +17,9 @@ media/
 
 # VS Code
 .vscode/
+# Archivos estáticos generados por collectstatic
+staticfiles/
+
 # Certificados HTTPS: la clave privada NUNCA se sube al repositorio
 certs/
 *.pem
