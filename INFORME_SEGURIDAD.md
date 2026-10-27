@@ -34,7 +34,7 @@ Revisión de `settings.py`: `DEBUG = True` (por defecto, desde `.env`) → **sí
 | # | Hallazgo | OWASP | Evidencia (cómo lo comprobé) | Corrección aplicada | Estado |
 |---|---|---|---|---|---|
 | 1 | La contraseña de la base de datos y la `SECRET_KEY` original están en el historial de GitHub | A04 / A02 | `git log --all -p -S"12345678"` muestra el commit `c35dfc1` | Secretos movidos a `.env` (ignorado por git), `SECRET_KEY` nueva. Falta rotar la contraseña de PostgreSQL | Mitigado |
-| 2 | El sitio se sirve solo por HTTP | A04 | Se abre con `http://127.0.0.1:8000` | Parte 1 | Pendiente |
+| 2 | El sitio se sirve solo por HTTP | A04 | Se abre con `http://127.0.0.1:8000` | Certificado de desarrollo (`npm run certificado`: mkcert o autofirmado), `runserver_plus` en `https://localhost:8443`, `SECURE_SSL_REDIRECT`, cookies `Secure`, HSTS de 300 s, `nosniff` y `Referrer-Policy: same-origin`. `certs/` y `*.pem` en `.gitignore`. Comprobado: la respuesta trae `Strict-Transport-Security: max-age=300` y una petición http recibe `301` a https | Corregido |
 | 3 | El token del administrador se guarda en `sessionStorage`, legible desde JavaScript | A07 | `sessionStorage.getItem('sesionAdmin')` en la consola devuelve el token | Parte 2 | Pendiente |
 | 4 | No existe registro de clientes ni roles distintos de admin | A07 / A01 | No hay rutas de registro; solo login de administrador | Parte 2 y 3 | Pendiente |
 | 5 | Las compras no se registran ni validan en el servidor (el total se calcula en el navegador) | A06 | `Checkout.jsx` no hace ninguna petición a la API | Parte 3 | Pendiente |

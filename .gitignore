@@ -17,6 +17,11 @@ media/
 
 # VS Code
 .vscode/
+# Certificados HTTPS: la clave privada NUNCA se sube al repositorio
+certs/
+*.pem
+*.key
+
 # Dependencias de Node (raíz y frontend)
 node_modules/
 

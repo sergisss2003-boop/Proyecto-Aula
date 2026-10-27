@@ -6,8 +6,10 @@
   "scripts": {
     "instalar": "npm install && npm install --prefix tienda_frontend && node scripts/python.mjs -m pip install -r requirements.txt",
     "dev": "concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend\" \"npm:dev:frontend\"",
-    "dev:https": "concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend\" \"npm run dev:https --prefix tienda_frontend\"",
+    "certificado": "node scripts/python.mjs scripts/crear_certificado.py",
+    "dev:https": "concurrently --kill-others -n django,react -c blue,magenta \"npm:dev:backend:https\" \"npm run dev:https --prefix tienda_frontend\"",
     "dev:backend": "node scripts/python.mjs manage.py runserver",
+    "dev:backend:https": "node scripts/python.mjs DJANGO_USAR_HTTPS=True manage.py runserver_plus --cert-file certs/cert.pem --key-file certs/key.pem 8443",
     "dev:frontend": "npm run dev --prefix tienda_frontend",
     "migrar": "node scripts/python.mjs manage.py migrate",
     "admin:crear": "node scripts/python.mjs manage.py createsuperuser",

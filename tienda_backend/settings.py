@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'catalogo',
     'rest_framework.authtoken',
+    'django_extensions',  # runserver_plus: servidor de desarrollo con HTTPS
 ]
 
 MIDDLEWARE = [
@@ -197,7 +198,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Solo se aceptan formularios/peticiones con cookies que vengan de estos orígenes.
 CSRF_TRUSTED_ORIGINS = env_lista(
     'DJANGO_CSRF_TRUSTED_ORIGINS',
-    'http://localhost:5173,https://localhost:5173,http://127.0.0.1:5173',
+    'http://localhost:5173,https://localhost:5173,http://127.0.0.1:5173,https://localhost:8443,https://127.0.0.1:8443',
 )
 # SameSite=Lax: el navegador no envía las cookies cuando la petición la inicia otro sitio web.
 SESSION_COOKIE_SAMESITE = 'Lax'
@@ -206,14 +207,16 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_HTTPONLY = True
 
 # --- HTTPS ---
-# USAR_HTTPS=True cuando la página se sirve con https (en producción siempre).
+# USAR_HTTPS=True cuando la página se sirve con https: "npm run dev:https" lo activa
+# (runserver_plus en https://localhost:8443) y en producción está siempre activo.
 USAR_HTTPS = env_bool('DJANGO_USAR_HTTPS', not DEBUG)
 if USAR_HTTPS:
-    SECURE_SSL_REDIRECT = env_bool('DJANGO_REDIRIGIR_HTTPS', not DEBUG)  # http:// -> https://
+    SECURE_SSL_REDIRECT = True     # cualquier petición http:// se redirige a https://
     SESSION_COOKIE_SECURE = True   # las cookies solo viajan cifradas
     CSRF_COOKIE_SECURE = True
-    # HSTS: el navegador recuerda que este sitio SOLO se abre con https
-    SECURE_HSTS_SECONDS = int(env('DJANGO_HSTS_SEGUNDOS', '31536000'))
+    # HSTS: el navegador recuerda que este sitio SOLO se abre con https.
+    # En el laboratorio 300 s (5 min) porque afecta a TODO "localhost"; en producción 1 año.
+    SECURE_HSTS_SECONDS = int(env('DJANGO_HSTS_SEGUNDOS', '300' if DEBUG else '31536000'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = False
 # Si hay un proxy delante (Vite en desarrollo, Nginx en producción) que recibe el https,
@@ -222,7 +225,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- Cabeceras contra XSS y otros ataques ---
 SECURE_CONTENT_TYPE_NOSNIFF = True       # el navegador no "adivina" el tipo de archivo
-SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+SECURE_REFERRER_POLICY = 'same-origin'   # la dirección de origen no se envía a otros sitios
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 X_FRAME_OPTIONS = 'DENY'                 # nadie puede meter el sitio dentro de un iframe
 
