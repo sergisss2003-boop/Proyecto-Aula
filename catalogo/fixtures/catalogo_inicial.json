@@ -1,0 +1,706 @@
+[
+{
+  "model": "catalogo.categoria",
+  "pk": 9,
+  "fields": {
+    "nombre": "Mujer",
+    "descripcion": "",
+    "padre": null,
+    "orden": 1
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 10,
+  "fields": {
+    "nombre": "Hombre",
+    "descripcion": "",
+    "padre": null,
+    "orden": 2
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 11,
+  "fields": {
+    "nombre": "Accesorios",
+    "descripcion": "",
+    "padre": null,
+    "orden": 3
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 12,
+  "fields": {
+    "nombre": "Descuentos",
+    "descripcion": "",
+    "padre": null,
+    "orden": 4
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 13,
+  "fields": {
+    "nombre": "Camisetas",
+    "descripcion": "",
+    "padre": 9,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 14,
+  "fields": {
+    "nombre": "Camisetas",
+    "descripcion": "",
+    "padre": 10,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 15,
+  "fields": {
+    "nombre": "Pantalones",
+    "descripcion": "",
+    "padre": 9,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 16,
+  "fields": {
+    "nombre": "Pantalones",
+    "descripcion": "",
+    "padre": 10,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 17,
+  "fields": {
+    "nombre": "Tenis",
+    "descripcion": "",
+    "padre": 9,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 18,
+  "fields": {
+    "nombre": "Tenis",
+    "descripcion": "",
+    "padre": 10,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 19,
+  "fields": {
+    "nombre": "Vestidos",
+    "descripcion": "",
+    "padre": 9,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 20,
+  "fields": {
+    "nombre": "Camisetas Oversize",
+    "descripcion": "",
+    "padre": 10,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 21,
+  "fields": {
+    "nombre": "Bolsos",
+    "descripcion": "",
+    "padre": 11,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 22,
+  "fields": {
+    "nombre": "Gorras",
+    "descripcion": "",
+    "padre": 11,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 23,
+  "fields": {
+    "nombre": "Medias",
+    "descripcion": "",
+    "padre": 11,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.categoria",
+  "pk": 24,
+  "fields": {
+    "nombre": "Bodies",
+    "descripcion": "",
+    "padre": 9,
+    "orden": 0
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 1,
+  "fields": {
+    "nombre": "Crop Top",
+    "descripcion": "Crop top basico para mujer. Silueta corta, ajuste cómodo y soporte ligero.",
+    "precio": "70000.00",
+    "precio_anterior": null,
+    "stock": 5,
+    "talla": "S,M,L",
+    "color": "Blanco",
+    "imagen": "productos/crop_top.webp",
+    "estado": "activo",
+    "categoria": 13
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 2,
+  "fields": {
+    "nombre": "Camiseta Oversize",
+    "descripcion": "Camiseta oversize en algodón sostenible con manga rodada.",
+    "precio": "99990.00",
+    "precio_anterior": null,
+    "stock": 2,
+    "talla": "S,M,L",
+    "color": "Blanco",
+    "imagen": "productos/Camiseta_oversize_mujer.webp",
+    "estado": "activo",
+    "categoria": 13
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 5,
+  "fields": {
+    "nombre": "Body Manga Larga",
+    "descripcion": "Body manga larga cuello alto para mujer",
+    "precio": "100000.00",
+    "precio_anterior": null,
+    "stock": 3,
+    "talla": "S,M,L",
+    "color": "Rosado",
+    "imagen": "productos/1.webp",
+    "estado": "activo",
+    "categoria": 24
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 6,
+  "fields": {
+    "nombre": "Body",
+    "descripcion": "Body manga larga en mesh para mujer.",
+    "precio": "98900.00",
+    "precio_anterior": null,
+    "stock": 3,
+    "talla": "S,M,L",
+    "color": "Negro",
+    "imagen": "productos/BODY-MESH-4.webp",
+    "estado": "activo",
+    "categoria": 24
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 7,
+  "fields": {
+    "nombre": "Body Manga Larga",
+    "descripcion": "Body manga larga café",
+    "precio": "110000.00",
+    "precio_anterior": null,
+    "stock": 2,
+    "talla": "S,M,L,XL",
+    "color": "Café",
+    "imagen": "productos/749476-800-auto.webp",
+    "estado": "activo",
+    "categoria": 24
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 8,
+  "fields": {
+    "nombre": "Camiseta Gris",
+    "descripcion": "Camiseta gris tela premium",
+    "precio": "100000.00",
+    "precio_anterior": null,
+    "stock": 2,
+    "talla": "S,M,L,XL",
+    "color": "Gris",
+    "imagen": "productos/746617-800-auto.webp",
+    "estado": "activo",
+    "categoria": 13
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 9,
+  "fields": {
+    "nombre": "Camiseta Negra",
+    "descripcion": "Camiseta oversize negro tela premium",
+    "precio": "120000.00",
+    "precio_anterior": null,
+    "stock": 2,
+    "talla": "S,M,L",
+    "color": "Negro",
+    "imagen": "productos/96076-1.webp",
+    "estado": "activo",
+    "categoria": 20
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 10,
+  "fields": {
+    "nombre": "Camiseta",
+    "descripcion": "Camiseta café, confeccionada en un jersey premium con un peso de 250gr, tiene firma bordada en frente en punto corazón.",
+    "precio": "120000.00",
+    "precio_anterior": null,
+    "stock": 3,
+    "talla": "S,M,L",
+    "color": "Café",
+    "imagen": "productos/751687-800-auto.webp",
+    "estado": "activo",
+    "categoria": 14
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 11,
+  "fields": {
+    "nombre": "Jogger Negro",
+    "descripcion": "Jogger negro basico",
+    "precio": "130000.00",
+    "precio_anterior": null,
+    "stock": 3,
+    "talla": "S,M,L",
+    "color": "Negro",
+    "imagen": "productos/749481-800-auto.webp",
+    "estado": "activo",
+    "categoria": 15
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 12,
+  "fields": {
+    "nombre": "Jogger Marfil",
+    "descripcion": "Jogger marfil, confeccionado en una Burda premium de 400gr. Lleva pretina con elástico interno y sesgos en los costados en color contraste café.",
+    "precio": "140000.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "S,M,L",
+    "color": "Blanco",
+    "imagen": "productos/748923-800-auto.webp",
+    "estado": "activo",
+    "categoria": 15
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 13,
+  "fields": {
+    "nombre": "Jean Straight",
+    "descripcion": "Jean Straight, confeccionado en tela premium de 10 OZ . Diseñado con 5 Bolsillos, insumos contramarcados, destroyeds en frente y garra en contraste.",
+    "precio": "140000.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "S,M,L",
+    "color": "Azul",
+    "imagen": "productos/748312-800-auto.webp",
+    "estado": "activo",
+    "categoria": 15
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 14,
+  "fields": {
+    "nombre": "Jean Baggy",
+    "descripcion": "Pantalón Moscou, confeccionado en tela premium de 10OZ. Diseñado con 5 Bolsillos, Insumos contramarcados, detalle Bordado en posterior y garra tono a tono.",
+    "precio": "188000.00",
+    "precio_anterior": null,
+    "stock": 5,
+    "talla": "S,M,L,XL",
+    "color": "Negro",
+    "imagen": "productos/743038-800-auto.webp",
+    "estado": "activo",
+    "categoria": 16
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 15,
+  "fields": {
+    "nombre": "Gorra",
+    "descripcion": "Gorra negra",
+    "precio": "70000.00",
+    "precio_anterior": null,
+    "stock": 2,
+    "talla": "",
+    "color": "Negro",
+    "imagen": "productos/745705-800-auto.webp",
+    "estado": "activo",
+    "categoria": 22
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 16,
+  "fields": {
+    "nombre": "Jogger Negro",
+    "descripcion": "Sudadera negra de silueta amplia, con gráficos que mezclan tonos rojo oscuro y gris sobre toda la prenda. El diseño juega con diferentes tamaños y ubicaciones, gráficos de inspiración tribal y detalles que continúan en la parte posterior. Su caída baggy y el cordón ajustable en cintura.",
+    "precio": "160000.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "S,M,L,XL",
+    "color": "Negro",
+    "imagen": "productos/E-COMMERCE4-4_8-28-2616617.webp",
+    "estado": "activo",
+    "categoria": 16
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 17,
+  "fields": {
+    "nombre": "Camiseta Oversize",
+    "descripcion": "Camiseta oversize negra con una horma amplia y relajada que aporta volumen sin perder estructura. Los vivos en contraste sobre hombros y pecho rompen la base negra y le dan un aire deportivo, mientras los estampados delanteros minimalistas contrastan con una gráfica posterior de mayor impacto.",
+    "precio": "110000.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "S,M,L",
+    "color": "Negro",
+    "imagen": "productos/E-COMMERCE_SEPTIEMBRE_4-417142.webp",
+    "estado": "activo",
+    "categoria": 20
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 18,
+  "fields": {
+    "nombre": "Camiseta Ivory",
+    "descripcion": "Freedom en cada detalle.\r\n\r\nUna camiseta blanca de estética limpia al frente que contrasta con una gráfica protagonista de caballo en la espalda, inspirada en libertad, fuerza y movimiento. Su silueta boxy fit aporta un corte más ancho y estructurado, con largo más corto para un look urbano y actual.",
+    "precio": "90000.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "S,M,L",
+    "color": "Blanco",
+    "imagen": "productos/E-COMMERCE_SEPTIEMBRE_4-417197_1.webp",
+    "estado": "activo",
+    "categoria": 14
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 19,
+  "fields": {
+    "nombre": "Camiseta Boxy",
+    "descripcion": "Camiseta negra boxy travis vision.",
+    "precio": "100000.00",
+    "precio_anterior": null,
+    "stock": 3,
+    "talla": "S,M,L,XL",
+    "color": "Negro",
+    "imagen": "productos/E-COMMERCE4-4_.8-28-26168631.webp",
+    "estado": "activo",
+    "categoria": 14
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 20,
+  "fields": {
+    "nombre": "Jogger",
+    "descripcion": "Sudadera wide en tono crudo con silueta amplia y caída relajada.",
+    "precio": "170000.00",
+    "precio_anterior": null,
+    "stock": 3,
+    "talla": "S,M,L",
+    "color": "Blanco",
+    "imagen": "productos/E-COMMERCE5-410741.webp",
+    "estado": "activo",
+    "categoria": 16
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 21,
+  "fields": {
+    "nombre": "Gorra Unisex Adidas",
+    "descripcion": "La gorra unisex Adidas te brinda el accesorio perfecto para complementar tu estilo deportivo y casual. Confeccionada en suave algodón, esta gorra te ofrece comodidad y un ajuste ideal en cualquier momento del día.",
+    "precio": "90000.00",
+    "precio_anterior": null,
+    "stock": 5,
+    "talla": "",
+    "color": "Negro",
+    "imagen": "productos/w1200h1200fitpad.webp",
+    "estado": "activo",
+    "categoria": 22
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 22,
+  "fields": {
+    "nombre": "Gorra Mujer New Era",
+    "descripcion": "La gorra NEW ERA Los Angeles Dodgers 9FORTY para hombre te permite llevar tu pasión por los Dodgers con un estilo inconfundible.",
+    "precio": "100000.00",
+    "precio_anterior": null,
+    "stock": 6,
+    "talla": "",
+    "color": "Beige",
+    "imagen": "productos/w1200h1200fitpad_1.webp",
+    "estado": "activo",
+    "categoria": 22
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 23,
+  "fields": {
+    "nombre": "Manos Libres Negro Hombre",
+    "descripcion": "El Purse Bag es una pieza compacta y funcional que combina la practicidad de un Fanny Pack con la comodidad de un manos libres. Forma parte de nuestras colecciones unisex y está pensado para acompañar el movimiento diario sin perder estructura ni estilo.",
+    "precio": "1600000.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "",
+    "color": "Negro",
+    "imagen": "productos/PurseBlack1.webp",
+    "estado": "activo",
+    "categoria": 21
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 24,
+  "fields": {
+    "nombre": "Jean Relaxed Fit",
+    "descripcion": "Tiro medio, para un ajuste relajado con espacio de movimiento.",
+    "precio": "99900.00",
+    "precio_anterior": "170000.00",
+    "stock": 2,
+    "talla": "S,M,L",
+    "color": "Gris",
+    "imagen": "productos/63_332H201_GRI194305_3.webp",
+    "estado": "activo",
+    "categoria": 12
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 25,
+  "fields": {
+    "nombre": "Sudadera Capucha",
+    "descripcion": "Sudadera con capucha, de cremallera",
+    "precio": "110000.00",
+    "precio_anterior": "179900.00",
+    "stock": 5,
+    "talla": "S,M,L,XL",
+    "color": "Amarillo",
+    "imagen": "productos/02434190047-a4o.webp",
+    "estado": "activo",
+    "categoria": 12
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 26,
+  "fields": {
+    "nombre": "Vestido Midi",
+    "descripcion": "Vestido Midi cuello halter pra mujer",
+    "precio": "160000.00",
+    "precio_anterior": null,
+    "stock": 3,
+    "talla": "S,M,L",
+    "color": "Blanco",
+    "imagen": "productos/01638663712-a4o.webp",
+    "estado": "activo",
+    "categoria": 19
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 27,
+  "fields": {
+    "nombre": "Vestido Mini",
+    "descripcion": "Vestido mini cuello bardot brillo",
+    "precio": "149900.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "S,M,L",
+    "color": "Rojo",
+    "imagen": "productos/04343662605-p.webp",
+    "estado": "activo",
+    "categoria": 19
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 28,
+  "fields": {
+    "nombre": "Camiseta",
+    "descripcion": "Camiseta manga corta cuello redondo",
+    "precio": "45900.00",
+    "precio_anterior": null,
+    "stock": 5,
+    "talla": "S,M,L",
+    "color": "Rosado",
+    "imagen": "productos/02666298144-p.webp",
+    "estado": "activo",
+    "categoria": 13
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 29,
+  "fields": {
+    "nombre": "Camiseta",
+    "descripcion": "Camiseta manga larga cuello asimétrico",
+    "precio": "119900.00",
+    "precio_anterior": null,
+    "stock": 5,
+    "talla": "S,M,L",
+    "color": "Marrón",
+    "imagen": "productos/04228360700-p.webp",
+    "estado": "activo",
+    "categoria": 13
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 30,
+  "fields": {
+    "nombre": "Zapatillas Piso Volumen",
+    "descripcion": "Plantilla técnica flexible de espuma compuesta de látex, diseñada para ofrecer un mayor confort.",
+    "precio": "170000.00",
+    "precio_anterior": null,
+    "stock": 3,
+    "talla": "34,35,36,37,38",
+    "color": "",
+    "imagen": "productos/11404764001-a2d.webp",
+    "estado": "activo",
+    "categoria": 17
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 31,
+  "fields": {
+    "nombre": "Tenis Deportivo",
+    "descripcion": "Plantilla técnica flexible de espuma compuesta de látex, diseñada para ofrecer un mayor confort.",
+    "precio": "180000.00",
+    "precio_anterior": null,
+    "stock": 5,
+    "talla": "35,36,37",
+    "color": "",
+    "imagen": "productos/11508864202-a3o.webp",
+    "estado": "activo",
+    "categoria": 17
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 32,
+  "fields": {
+    "nombre": "Bolso Caja Textura",
+    "descripcion": "Alto x Ancho X Fondo : 16 x 10 x 4cm.",
+    "precio": "110000.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "",
+    "color": "Rosado",
+    "imagen": "productos/04118175902-a4o.webp",
+    "estado": "activo",
+    "categoria": 21
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 33,
+  "fields": {
+    "nombre": "Bolso Hombro Textura Cierre",
+    "descripcion": "",
+    "precio": "149900.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "",
+    "color": "Marrón",
+    "imagen": "productos/03616175700-a1t.webp",
+    "estado": "activo",
+    "categoria": 21
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 34,
+  "fields": {
+    "nombre": "Pack 2 Calcetines Sport",
+    "descripcion": "Mujer",
+    "precio": "59900.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "S,M,L",
+    "color": "Avena",
+    "imagen": "productos/03311588249-a4o.webp",
+    "estado": "activo",
+    "categoria": 23
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 35,
+  "fields": {
+    "nombre": "Tenis para Hombre",
+    "descripcion": "Tenis de cuero para hombre Duna",
+    "precio": "200000.00",
+    "precio_anterior": null,
+    "stock": 4,
+    "talla": "38,39,40",
+    "color": "Rojo",
+    "imagen": "productos/shopping.webp",
+    "estado": "activo",
+    "categoria": 18
+  }
+},
+{
+  "model": "catalogo.producto",
+  "pk": 36,
+  "fields": {
+    "nombre": "Tenis para Hombre",
+    "descripcion": "Tenis en cuero para hombre Halo 2",
+    "precio": "189900.00",
+    "precio_anterior": null,
+    "stock": 3,
+    "talla": "38,39",
+    "color": "Negro",
+    "imagen": "productos/shopping_1.webp",
+    "estado": "activo",
+    "categoria": 18
+  }
+}
+]
