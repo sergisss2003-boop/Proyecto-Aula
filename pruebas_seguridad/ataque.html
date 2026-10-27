@@ -1,0 +1,30 @@
+<!doctype html>
+<!--
+  Prueba de CSRF (Parte 5 del laboratorio).
+  Simula una página maliciosa que, apenas se abre, intenta crear un producto en la tienda
+  usando la sesión del administrador que tiene abierta en el mismo navegador.
+
+  Cómo probar:
+    1. Arranca la tienda (npm run dev:https) e inicia sesión como administrador.
+    2. Abre ESTE archivo con doble clic (se abre como file://, es decir, desde "otro sitio").
+    3. Resultado esperado: el servidor responde 401/403 y NO se crea ningún producto.
+       - SameSite=Strict: el navegador no envía la cookie del token desde otro sitio.
+       - Aunque la enviara, faltaría la cabecera X-CSRFToken, que esta página no puede leer.
+  Si usas "npm run dev" (sin https), cambia la URL por http://localhost:8000/api/productos/
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>¡Ganaste un premio!</title>
+</head>
+<body>
+  <h1>Cargando tu premio...</h1>
+  <form action="https://localhost:8443/api/productos/" method="POST">
+    <input name="nombre" value="producto-del-atacante">
+    <input name="precio" value="1">
+    <input name="stock" value="999">
+    <input name="categoria" value="1">
+  </form>
+  <script>document.forms[0].submit()</script>
+</body>
+</html>

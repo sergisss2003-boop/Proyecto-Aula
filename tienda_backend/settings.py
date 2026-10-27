@@ -203,7 +203,8 @@ CSRF_TRUSTED_ORIGINS = env_lista(
 )
 # SameSite=Lax: el navegador no envía las cookies cuando la petición la inicia otro sitio web.
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Strict'   # la cookie csrftoken nunca viaja en peticiones iniciadas por otro sitio
+CSRF_COOKIE_HTTPONLY = False      # el frontend debe poder leerla para copiarla en la cabecera X-CSRFToken
 # JavaScript no puede leer la cookie de sesión (si se colara un script, no podría robarla).
 SESSION_COOKIE_HTTPONLY = True
 
