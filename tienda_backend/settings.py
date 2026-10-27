@@ -68,7 +68,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'catalogo',
-    'rest_framework.authtoken',
+    'cuentas',            # registro, login con JWT en cookie, roles
+    'pedidos',            # pedidos de los clientes (cada uno ve solo los suyos)
+    'django_extensions',  # runserver_plus: servidor de desarrollo con HTTPS
 ]
 
 MIDDLEWARE = [
@@ -171,9 +173,9 @@ MAILERS = {
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # La sesión es un token JWT dentro de una cookie HttpOnly (ver cuentas/autenticacion.py)
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        'cuentas.autenticacion.CookieJWTAuthentication',
     ],
 }
 SPECTACULAR_SETTINGS = {
@@ -197,23 +199,26 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Solo se aceptan formularios/peticiones con cookies que vengan de estos orígenes.
 CSRF_TRUSTED_ORIGINS = env_lista(
     'DJANGO_CSRF_TRUSTED_ORIGINS',
-    'http://localhost:5173,https://localhost:5173,http://127.0.0.1:5173',
+    'http://localhost:5173,https://localhost:5173,http://127.0.0.1:5173,https://localhost:8443,https://127.0.0.1:8443',
 )
 # SameSite=Lax: el navegador no envía las cookies cuando la petición la inicia otro sitio web.
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Strict'   # la cookie csrftoken nunca viaja en peticiones iniciadas por otro sitio
+CSRF_COOKIE_HTTPONLY = False      # el frontend debe poder leerla para copiarla en la cabecera X-CSRFToken
 # JavaScript no puede leer la cookie de sesión (si se colara un script, no podría robarla).
 SESSION_COOKIE_HTTPONLY = True
 
 # --- HTTPS ---
-# USAR_HTTPS=True cuando la página se sirve con https (en producción siempre).
+# USAR_HTTPS=True cuando la página se sirve con https: "npm run dev:https" lo activa
+# (runserver_plus en https://localhost:8443) y en producción está siempre activo.
 USAR_HTTPS = env_bool('DJANGO_USAR_HTTPS', not DEBUG)
 if USAR_HTTPS:
-    SECURE_SSL_REDIRECT = env_bool('DJANGO_REDIRIGIR_HTTPS', not DEBUG)  # http:// -> https://
+    SECURE_SSL_REDIRECT = True     # cualquier petición http:// se redirige a https://
     SESSION_COOKIE_SECURE = True   # las cookies solo viajan cifradas
     CSRF_COOKIE_SECURE = True
-    # HSTS: el navegador recuerda que este sitio SOLO se abre con https
-    SECURE_HSTS_SECONDS = int(env('DJANGO_HSTS_SEGUNDOS', '31536000'))
+    # HSTS: el navegador recuerda que este sitio SOLO se abre con https.
+    # En el laboratorio 300 s (5 min) porque afecta a TODO "localhost"; en producción 1 año.
+    SECURE_HSTS_SECONDS = int(env('DJANGO_HSTS_SEGUNDOS', '300' if DEBUG else '31536000'))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = False
 # Si hay un proxy delante (Vite en desarrollo, Nginx en producción) que recibe el https,
@@ -222,7 +227,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- Cabeceras contra XSS y otros ataques ---
 SECURE_CONTENT_TYPE_NOSNIFF = True       # el navegador no "adivina" el tipo de archivo
-SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+SECURE_REFERRER_POLICY = 'same-origin'   # la dirección de origen no se envía a otros sitios
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 X_FRAME_OPTIONS = 'DENY'                 # nadie puede meter el sitio dentro de un iframe
 
@@ -239,8 +244,40 @@ SECURE_CSP = {
     'frame-ancestors': [CSP.NONE],
 }
 
-# --- Límite de intentos ---
-# Máximo de intentos de inicio de sesión por minuto (evita adivinar contraseñas a la fuerza).
-REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
-    'login': env('LIMITE_LOGIN', '5/min'),
+# --- Token de sesión (JWT) ---
+# Secreto con el que se firman los tokens. Es distinto de SECRET_KEY y es obligatorio.
+JWT_SECRET = env('JWT_SECRET')
+if not JWT_SECRET:
+    raise ImproperlyConfigured(
+        'Falta JWT_SECRET en el archivo .env. Genera uno con:  '
+        'python -c "import secrets; print(secrets.token_urlsafe(48))"'
+    )
+JWT_MINUTOS = 15                                         # el token vence en 15 minutos
+JWT_COOKIE_SECURE = env_bool('JWT_COOKIE_SECURE', True)  # la cookie solo viaja por HTTPS (localhost se acepta)
+
+# --- Límite de intentos de login ---
+# Después de 5 intentos fallidos desde la misma IP, el login se bloquea 15 minutos (429).
+LOGIN_MAX_INTENTOS = int(env('LOGIN_MAX_INTENTOS', '5'))
+LOGIN_VENTANA_SEGUNDOS = 15 * 60
+
+# ---------------------------------------------------------------------------
+# REGISTROS (logging): el detalle de los errores y los eventos de seguridad
+# se escriben en la terminal del servidor, nunca en la respuesta al usuario.
+# ---------------------------------------------------------------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {'format': '[{asctime}] {levelname} {name}: {message}', 'style': '{', 'datefmt': '%Y-%m-%d %H:%M:%S'},
+    },
+    'handlers': {
+        'consola': {'class': 'logging.StreamHandler', 'formatter': 'simple'},
+    },
+    'loggers': {
+        'django': {'handlers': ['consola'], 'level': 'INFO'},
+        # Peticiones rechazadas por CSRF, hosts no permitidos, etc.
+        'django.security': {'handlers': ['consola'], 'level': 'WARNING', 'propagate': False},
+        # Logins fallidos, bloqueos por intentos y registros de usuarios (cuentas/views.py)
+        'cuentas': {'handlers': ['consola'], 'level': 'INFO', 'propagate': False},
+    },
 }

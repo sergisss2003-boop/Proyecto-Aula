@@ -1,5 +1,6 @@
 // Ejecuta Python usando el entorno virtual del proyecto, en Windows, Mac o Linux.
 // Uso desde package.json:  node scripts/python.mjs manage.py runserver
+// Se pueden pasar variables de entorno antes del comando:  node scripts/python.mjs DJANGO_USAR_HTTPS=True manage.py ...
 import { existsSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import path from 'node:path'
@@ -19,7 +20,15 @@ if (!python) {
   process.exit(1)
 }
 
-const proceso = spawn(python, process.argv.slice(2), { cwd: raiz, stdio: 'inherit' })
+// Los argumentos con forma CLAVE=valor al inicio son variables de entorno (funciona igual en Windows)
+const argumentos = process.argv.slice(2)
+const entorno = { ...process.env }
+while (argumentos.length && /^[A-Z_][A-Z0-9_]*=/.test(argumentos[0])) {
+  const [clave, ...valor] = argumentos.shift().split('=')
+  entorno[clave] = valor.join('=')
+}
+
+const proceso = spawn(python, argumentos, { cwd: raiz, stdio: 'inherit', env: entorno })
 proceso.on('exit', codigo => process.exit(codigo ?? 0))
 // Al cerrar con Ctrl + C, también se cierra Django
 for (const senal of ['SIGINT', 'SIGTERM']) process.on(senal, () => proceso.kill(senal))

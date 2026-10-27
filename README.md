@@ -15,7 +15,7 @@ Proyecto de aula: tienda de ropa juvenil con **backend en Django + Django REST F
 python -m venv venv
 
 # 2. Archivo de configuración con los datos sensibles
-#    (copia .env.example como .env y llena DJANGO_SECRET_KEY y DB_PASSWORD)
+#    (copia .env.example como .env y llena DJANGO_SECRET_KEY, JWT_SECRET y DB_PASSWORD)
 copy .env.example .env        # Windows
 # cp .env.example .env        # Mac / Linux
 
@@ -25,6 +25,9 @@ npm run instalar
 # 4. Crea las tablas y el usuario administrador
 npm run migrar
 npm run admin:crear
+
+# 5. (Opcional, para HTTPS) crea el certificado de desarrollo
+npm run certificado
 ```
 
 ## Uso diario
@@ -47,11 +50,14 @@ Para detener todo: `Ctrl + C`.
 |---|---|
 | `npm run instalar` | Instala las dependencias de Node (raíz y frontend) y de Python (`requirements.txt`) |
 | `npm run dev` | Arranca backend y frontend juntos |
-| `npm run dev:https` | Igual, pero la tienda abre en **https://localhost:5173** |
+| `npm run certificado` | Crea el certificado HTTPS de desarrollo en `certs/` (una sola vez) |
+| `npm run dev:https` | Django con HTTPS en **https://localhost:8443** y la tienda en **https://localhost:5173** |
 | `npm run migrar` | Aplica los cambios de la base de datos |
 | `npm run admin:crear` | Crea un usuario administrador |
 | `npm run revisar` | Revisa errores en Django y en el código de React (ESLint) |
-| `npm run revisar:seguridad` | Lista de verificación de seguridad de Django para producción |
+| `npm run revisar:seguridad` | Lista de verificación de seguridad de Django para producción (`check --deploy`) |
+| `npm run pruebas` | Corre las 27 pruebas automáticas de seguridad (login, roles, pedidos, XSS, CSRF, errores) |
+| `npm run auditar` | Busca vulnerabilidades conocidas en las dependencias (`pip-audit` y `npm audit`) |
 | `npm run build` | Genera la versión final de la tienda (compila React y SCSS) en `tienda_frontend/dist` |
 | `npm run preview` | Construye y sirve la versión final, con las cabeceras de seguridad activas |
 
@@ -83,23 +89,45 @@ Se usan **variables** (`$negro`, `$rojo-descuento`, `$radio-pildora`...), **anid
 
 ## Seguridad
 
+El detalle completo (hallazgos, pruebas, OWASP y riesgos) está en **[INFORME_SEGURIDAD.md](INFORME_SEGURIDAD.md)**.
+
+### Roles
+
+| Rol | Ver catálogo | Comprar | Crear/editar/borrar productos | Ver pedidos |
+|---|---|---|---|---|
+| Visitante | Sí | No (debe iniciar sesión) | No | No |
+| Cliente (se registra en la tienda) | Sí | Sí | No (403) | Solo los suyos |
+| Administrador (`is_staff`) | Sí | Sí | Sí | Todos |
+
+Para convertir un usuario en administrador: `npm run admin:crear` o, en `python manage.py shell`, poner `is_staff = True`.
+
 ### HTTPS
-- `npm run dev:https` sirve la tienda con https usando un certificado de desarrollo (el navegador mostrará un aviso la primera vez: es normal en local).
-- Con `DJANGO_USAR_HTTPS=True` (automático cuando `DJANGO_DEBUG=False`), Django redirige http → https, activa **HSTS** y marca las cookies como **Secure**.
-- `SECURE_PROXY_SSL_HEADER` permite que Django sepa que la conexión original era https cuando hay un proxy delante.
+- `npm run certificado` crea `certs/cert.pem` y `certs/key.pem` (con **mkcert** si está instalado; si no, autofirmado). `certs/` está en `.gitignore`.
+- `npm run dev:https` corre Django con **runserver_plus en https://localhost:8443** y la tienda en **https://localhost:5173**.
+- Con HTTPS activo: redirección http → https, cookies `Secure`, **HSTS** (300 s en el laboratorio, 1 año en producción), `nosniff` y `Referrer-Policy: same-origin`.
+- Ojo: HSTS aplica a todo `localhost`. Si después usas `npm run dev` (http) y el navegador te manda a https, espera 5 minutos o bórralo en `chrome://net-internals/#hsts`.
+
+### Registro, login y sesión
+- Registro (`/api/auth/registro/`): contraseña de mínimo 10 caracteres, guardada con **hash PBKDF2**. El rol lo asigna el servidor (nunca el cliente).
+- Login (`/api/auth/login/`): entrega un **token JWT firmado que vence en 15 minutos** dentro de una cookie **HttpOnly + Secure + SameSite=Strict** (JavaScript no puede leerla).
+- Mensaje genérico «Usuario o contraseña incorrectos» y **máximo 5 intentos fallidos**: el 6.º responde 429 durante 15 minutos.
 
 ### Mitigación de XSS
-- React escapa automáticamente todo el texto que muestra (no se usa `dangerouslySetInnerHTML`).
-- El backend **elimina etiquetas HTML** de nombres, descripciones, tallas y colores antes de guardarlos (`catalogo/serializers.py`).
-- **Content Security Policy (CSP)**: el navegador solo ejecuta scripts del propio sitio. Django la envía en sus respuestas (`SECURE_CSP`) y la versión final de React la incluye en `index.html`.
-- Cabeceras `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` y `Referrer-Policy`.
+- React escapa todo el texto (no se usa `innerHTML` ni `dangerouslySetInnerHTML`).
+- El servidor elimina las etiquetas HTML de nombres, descripciones, tallas, colores y datos de envío antes de guardarlos.
+- **Content Security Policy**: Django la envía en sus respuestas (`SECURE_CSP`) y la versión final de React la lleva en `index.html`. Solo se ejecutan scripts del propio sitio.
 
 ### Protección CSRF
-- `CsrfViewMiddleware` activo y `CSRF_TRUSTED_ORIGINS` solo con el origen del frontend.
-- Cookies con **SameSite=Lax** y la de sesión con **HttpOnly**.
-- El panel de la tienda se autentica con un **token en la cabecera** (el navegador no lo envía solo, así que otro sitio no puede usarlo), y el login no depende de cookies.
-- El frontend llama a la API en su mismo origen (`/api`, a través del proxy de Vite), así que no hay que abrir CORS a otros sitios.
+- `CsrfViewMiddleware` activo y ninguna vista con `@csrf_exempt`.
+- Cookie `csrftoken` con `SameSite=Strict`; `src/api.js` la copia en la cabecera **`X-CSRFToken`** en cada petición que modifica datos (incluidos login, registro y logout).
+- Prueba: `pruebas_seguridad/ataque.html` (ver instrucciones dentro del archivo).
 
-### Otros
-- La clave secreta y la contraseña de la base de datos están en `.env`, que **no se sube a GitHub**.
-- El inicio de sesión permite máximo **5 intentos por minuto** (evita adivinar contraseñas).
+### Pedidos
+- El navegador solo envía producto, talla y cantidad; **precios, envío, total y dueño los calcula el servidor**.
+- Cada cliente ve solo sus pedidos: pedir el de otro responde 404 (IDOR corregido).
+- De la tarjeta solo se guardan la marca y los últimos 4 dígitos.
+
+### Secretos, errores y dependencias
+- `DJANGO_SECRET_KEY`, `JWT_SECRET` y `DB_PASSWORD` van en `.env` (no se sube a GitHub). Si falta alguno, el servidor no arranca y dice cuál.
+- Errores genéricos hacia afuera (`{"error": "Error interno"}`); el detalle y los intentos de login fallidos quedan en el registro de la terminal.
+- `npm run auditar` revisa vulnerabilidades conocidas en las dependencias de Python y de JavaScript.

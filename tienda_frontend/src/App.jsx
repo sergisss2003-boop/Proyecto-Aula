@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import { api, prepararCsrf } from './api'
 import Checkout from './Checkout'
 import Admin from './Admin'
 import Login from './Login'
 import Producto, { Precio, EtiquetaDescuento } from './Producto'
 import { tallasDe, descuentoDe } from './utils/producto'
 import Info from './Info'
+import MisPedidos from './MisPedidos'
 
-// La API se pide al mismo servidor del frontend; Vite la pasa a Django (ver vite.config.js)
-const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 const quitarTildes = (texto) => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
 
@@ -51,16 +50,21 @@ function App() {
     }
   }, [carrito])
 
-  // --- Sesión del administrador (se guarda solo mientras la pestaña esté abierta) ---
-  const [sesion, setSesion] = useState(() => {
-    try {
-      return JSON.parse(sessionStorage.getItem('sesionAdmin'))
-    } catch {
-      return null
-    }
-  })
-  const [loginAbierto, setLoginAbierto] = useState(false)
+  // --- Sesión ---
+  // El token va en una cookie HttpOnly que JavaScript NO puede leer (si se colara un script, no podría
+  // robarla). Por eso, para saber quién inició sesión se le pregunta al servidor (/auth/yo/).
+  const [sesion, setSesion] = useState(null)           // { email, nombre, rol: 'cliente' | 'admin' }
+  const [sesionRevisada, setSesionRevisada] = useState(false)
+  const [acceso, setAcceso] = useState(null)           // ventana de login abierta: { mensaje, siguiente }
   const [menuUsuarioAbierto, setMenuUsuarioAbierto] = useState(false)
+
+  useEffect(() => {
+    prepararCsrf()
+      .then(() => api.get('/auth/yo/'))
+      .then(({ data }) => setSesion(data))
+      .catch(() => setSesion(null))
+      .finally(() => setSesionRevisada(true))
+  }, [])
 
   const [hash, setHash] = useState(window.location.hash)
   useEffect(() => {
@@ -74,14 +78,16 @@ function App() {
   const productoId = coincideProducto ? Number(coincideProducto[1]) : null
   const coincideInfo = hash.match(/^#\/info\/([a-z-]+)$/)
   const seccionInfo = coincideInfo ? coincideInfo[1] : null
-  const vista = hash === '#/admin' && sesion
+  const esAdmin = sesion?.rol === 'admin'
+  const vista = hash === '#/admin' && esAdmin
     ? 'admin'
+    : hash === '#/mis-pedidos' ? 'pedidos'
     : productoId ? 'producto' : seccionInfo ? 'info' : 'tienda'
 
   // Al abrir un producto o una página de ayuda, la página vuelve arriba
   useEffect(() => {
-    if (productoId || seccionInfo) window.scrollTo(0, 0)
-  }, [productoId, seccionInfo])
+    if (productoId || seccionInfo || vista === 'pedidos') window.scrollTo(0, 0)
+  }, [productoId, seccionInfo, vista])
 
   // --- Boletín del pie de página ---
   const [correoBoletin, setCorreoBoletin] = useState('')
@@ -96,51 +102,50 @@ function App() {
     setCorreoBoletin('')
   }
 
-  // Si alguien entra a #/admin sin haber iniciado sesión, se le pide el login
-  const mostrarLogin = loginAbierto || (hash === '#/admin' && !sesion)
+  // Si alguien entra a #/admin sin ser administrador, se le pide iniciar sesión
+  const pideAdmin = hash === '#/admin' && sesionRevisada && !esAdmin
+  const datosAcceso = acceso || (pideAdmin
+    ? { mensaje: sesion ? 'Esta sección es solo para administradores.' : 'Inicia sesión como administrador.', siguiente: 'admin' }
+    : null)
   const cerrarLogin = () => {
-    setLoginAbierto(false)
+    setAcceso(null)
     if (window.location.hash === '#/admin') window.location.hash = ''
   }
 
   const iniciarSesion = (datos) => {
-    try {
-      sessionStorage.setItem('sesionAdmin', JSON.stringify(datos))
-    } catch {
-      // sin almacenamiento, la sesión dura mientras no se recargue la página
-    }
+    const siguiente = datosAcceso?.siguiente
     setSesion(datos)
-    setLoginAbierto(false)
+    setAcceso(null)
     setMenuUsuarioAbierto(false)
-    window.location.hash = '#/admin'
+    if (siguiente === 'checkout') setCheckoutAbierto(true)
+    else if (datos.rol === 'admin' && (siguiente === 'admin' || !siguiente)) window.location.hash = '#/admin'
+    else if (siguiente === 'admin') window.location.hash = ''
   }
 
   const cerrarSesion = () => {
-    try {
-      sessionStorage.removeItem('sesionAdmin')
-    } catch {
-      // nada que limpiar
-    }
-    setSesion(null)
-    setMenuUsuarioAbierto(false)
-    window.location.hash = ''
+    api.post('/auth/logout/').catch(() => {}).finally(() => {
+      setSesion(null)
+      setMenuUsuarioAbierto(false)
+      window.location.hash = ''
+    })
   }
 
   // --- Buscador ---
   const [buscadorAbierto, setBuscadorAbierto] = useState(false)
   const [busqueda, setBusqueda] = useState('')
 
-  // Cada vez que se vuelve a la tienda se recargan los datos, para reflejar lo hecho en el panel
+  // Cada vez que se vuelve a la tienda (o se termina una compra) se recargan los datos
+  const [recargas, setRecargas] = useState(0)
   useEffect(() => {
     if (vista === 'admin') return
-    axios.get(`${API_URL}/categorias/`)
+    api.get('/categorias/')
       .then(response => setCategorias(response.data))
       .catch(error => console.error('Error cargando categorias:', error))
 
-    axios.get(`${API_URL}/productos/`)
+    api.get('/productos/')
       .then(response => setProductos(response.data))
       .catch(error => console.error('Error cargando productos:', error))
-  }, [vista])
+  }, [vista, recargas])
 
   // --- Categorías principales (Mujer, Hombre...) y sus subcategorías (Camisas, Jeans...) ---
   const principales = categorias.filter(c => !c.padre)
@@ -210,10 +215,15 @@ function App() {
     setCarritoAbierto(true)
   }
 
+  // Solo un usuario con sesión puede comprar (el servidor también lo exige: 401 sin sesión)
+  const pedirLoginParaComprar = (mensaje = 'Inicia sesión o crea una cuenta para finalizar tu compra.') =>
+    setAcceso({ mensaje, siguiente: 'checkout' })
+
   const comprarAhora = (prod, talla, cantidad) => {
     agregarAlCarrito(prod, talla, cantidad)
     setCarritoAbierto(false)
-    setCheckoutAbierto(true)
+    if (sesion) setCheckoutAbierto(true)
+    else pedirLoginParaComprar()
   }
 
   const cambiarCantidad = (clave, delta) => {
@@ -238,12 +248,20 @@ function App() {
 
   const abrirCheckout = () => {
     setCarritoAbierto(false)
-    setCheckoutAbierto(true)
+    if (sesion) setCheckoutAbierto(true)
+    else pedirLoginParaComprar()
   }
 
   const finalizarCompra = () => {
     setCarrito([])
     setCheckoutAbierto(false)
+    setRecargas(n => n + 1)  // el stock cambió
+  }
+
+  const sesionVencida = () => {
+    setCheckoutAbierto(false)
+    setSesion(null)
+    pedirLoginParaComprar('Tu sesión venció. Inicia sesión de nuevo para terminar tu compra.')
   }
 
   const totalItems = carrito.reduce((suma, item) => suma + item.cantidad, 0)
@@ -273,7 +291,7 @@ function App() {
   }
 
   if (vista === 'admin') {
-    return <Admin apiUrl={API_URL} token={sesion.token} usuario={sesion.usuario} onSalir={cerrarSesion} />
+    return <Admin usuario={sesion.nombre} onSalir={cerrarSesion} />
   }
 
   return (
@@ -347,16 +365,17 @@ function App() {
             <div className="usuario-wrap">
               <button
                 className="icono-btn"
-                onClick={() => (sesion ? setMenuUsuarioAbierto(!menuUsuarioAbierto) : setLoginAbierto(true))}
-                aria-label={sesion ? 'Menú de administrador' : 'Iniciar sesión'}
+                onClick={() => (sesion ? setMenuUsuarioAbierto(!menuUsuarioAbierto) : setAcceso({}))}
+                aria-label={sesion ? 'Menú de usuario' : 'Iniciar sesión o crear cuenta'}
               >
                 <Icono><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></Icono>
                 {sesion && <span className="punto-sesion" />}
               </button>
               {sesion && menuUsuarioAbierto && (
                 <div className="menu-usuario">
-                  <p>Hola, <strong>{sesion.usuario}</strong></p>
-                  <a href="#/admin" onClick={() => setMenuUsuarioAbierto(false)}>Panel de administración</a>
+                  <p>Hola, <strong>{sesion.nombre}</strong></p>
+                  <a href="#/mis-pedidos" onClick={() => setMenuUsuarioAbierto(false)}>{esAdmin ? 'Todos los pedidos' : 'Mis pedidos'}</a>
+                  {esAdmin && <a href="#/admin" onClick={() => setMenuUsuarioAbierto(false)}>Panel de administración</a>}
                   <button onClick={cerrarSesion}>Cerrar sesión</button>
                 </div>
               )}
@@ -413,6 +432,8 @@ function App() {
         })()
       ) : vista === 'info' ? (
         <Info seccion={seccionInfo} />
+      ) : vista === 'pedidos' ? (
+        <MisPedidos sesion={sesion} esAdmin={esAdmin} formatoPrecio={formatoPrecio} onPedirLogin={() => setAcceso({})} />
       ) : (
       <>
       <header className="hero">
@@ -684,9 +705,9 @@ function App() {
         )}
       </aside>
 
-      {mostrarLogin && (
+      {datosAcceso && (
         <Login
-          apiUrl={API_URL}
+          mensaje={datosAcceso.mensaje}
           onCerrar={cerrarLogin}
           onExito={iniciarSesion}
         />
@@ -697,8 +718,10 @@ function App() {
           items={carrito}
           subtotal={totalCarrito}
           formatoPrecio={formatoPrecio}
+          sesion={sesion}
           onCerrar={() => setCheckoutAbierto(false)}
           onFinalizar={finalizarCompra}
+          onSesionVencida={sesionVencida}
         />
       )}
     </div>

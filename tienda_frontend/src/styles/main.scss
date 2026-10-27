@@ -37,3 +37,7 @@
 @use 'componentes/subcategorias';
 @use 'componentes/descuentos';
 @use 'componentes/selector-tallas';
+
+// Seguridad: cuentas de clientes
+@use 'componentes/acceso';
+@use 'paginas/mis-pedidos';

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import axios from 'axios'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { api } from './api'
 
 const formatoPrecio = (valor) => `$${Number(valor).toLocaleString('es-CO')}`
 
@@ -318,17 +318,12 @@ const pedirDatos = (api) =>
   Promise.all([api.get('/categorias/'), api.get('/productos/')])
     .then(([cats, prods]) => ({ categorias: cats.data, productos: prods.data }))
 
-function Admin({ apiUrl, token, usuario, onSalir }) {
+function Admin({ usuario, onSalir }) {
   const salirRef = useRef(onSalir)
   useEffect(() => { salirRef.current = onSalir })
 
-  // Cliente de la API que envía el token del administrador
-  const api = useMemo(
-    () => axios.create({ baseURL: apiUrl, headers: { Authorization: `Token ${token}` } }),
-    [apiUrl, token]
-  )
-
-  // Si el servidor responde 401 (token vencido o inválido), se cierra la sesión
+  // La sesión viaja en la cookie HttpOnly (la envía el navegador); si el servidor responde 401
+  // (el token venció a los 15 minutos o no es válido), se cierra la sesión
   useEffect(() => {
     const id = api.interceptors.response.use(
       (respuesta) => respuesta,
@@ -338,7 +333,7 @@ function Admin({ apiUrl, token, usuario, onSalir }) {
       }
     )
     return () => api.interceptors.response.eject(id)
-  }, [api])
+  }, [])
 
   const [pestana, setPestana] = useState('productos')
   const [productos, setProductos] = useState([])
@@ -358,7 +353,7 @@ function Admin({ apiUrl, token, usuario, onSalir }) {
       })
       .catch(error => setAviso({ tipo: 'error', texto: mensajeError(error) }))
       .finally(() => setCargando(false)),
-  [api])
+  [])
 
   // Carga inicial del panel
   useEffect(() => {
@@ -369,7 +364,7 @@ function Admin({ apiUrl, token, usuario, onSalir }) {
       })
       .catch(error => setAviso({ tipo: 'error', texto: mensajeError(error) }))
       .finally(() => setCargando(false))
-  }, [api])
+  }, [])
 
   useEffect(() => {
     if (!aviso) return
