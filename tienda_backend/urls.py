@@ -22,6 +22,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerSplitVie
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/auth/', include('cuentas.urls')),
     path('api/', include('catalogo.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     # "Split": el script de Swagger va en un archivo aparte, así funciona con la Content Security Policy

@@ -68,7 +68,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'catalogo',
-    'rest_framework.authtoken',
+    'cuentas',            # registro, login con JWT en cookie, roles
     'django_extensions',  # runserver_plus: servidor de desarrollo con HTTPS
 ]
 
@@ -172,9 +172,9 @@ MAILERS = {
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # La sesión es un token JWT dentro de una cookie HttpOnly (ver cuentas/autenticacion.py)
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+        'cuentas.autenticacion.CookieJWTAuthentication',
     ],
 }
 SPECTACULAR_SETTINGS = {
@@ -242,8 +242,18 @@ SECURE_CSP = {
     'frame-ancestors': [CSP.NONE],
 }
 
-# --- Límite de intentos ---
-# Máximo de intentos de inicio de sesión por minuto (evita adivinar contraseñas a la fuerza).
-REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
-    'login': env('LIMITE_LOGIN', '5/min'),
-}
+# --- Token de sesión (JWT) ---
+# Secreto con el que se firman los tokens. Es distinto de SECRET_KEY y es obligatorio.
+JWT_SECRET = env('JWT_SECRET')
+if not JWT_SECRET:
+    raise ImproperlyConfigured(
+        'Falta JWT_SECRET en el archivo .env. Genera uno con:  '
+        'python -c "import secrets; print(secrets.token_urlsafe(48))"'
+    )
+JWT_MINUTOS = 15                                         # el token vence en 15 minutos
+JWT_COOKIE_SECURE = env_bool('JWT_COOKIE_SECURE', True)  # la cookie solo viaja por HTTPS (localhost se acepta)
+
+# --- Límite de intentos de login ---
+# Después de 5 intentos fallidos desde la misma IP, el login se bloquea 15 minutos (429).
+LOGIN_MAX_INTENTOS = int(env('LOGIN_MAX_INTENTOS', '5'))
+LOGIN_VENTANA_SEGUNDOS = 15 * 60
