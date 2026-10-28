@@ -3,8 +3,8 @@
 
 .footer {
   background-color: $negro;
-  color: $gris-250;
-  margin-top: 4rem;
+  color: #e6ebe4;
+  margin-top: 5rem;
   overflow: hidden;
 }
 
@@ -60,8 +60,8 @@
 .newsletter {
   display: flex;
   margin-top: 1rem;
-  border: 1px solid $gris-700;
-  border-radius: $radio-sm;
+  border: 1px solid #4a554d;
+  border-radius: $radio-pildora;
   overflow: hidden;
 
   input {
@@ -77,8 +77,9 @@
   button {
     padding: 0.7rem 1.1rem;
     border: none;
-    background-color: $blanco;
+    background-color: $salvia;
     color: $negro;
+    border-radius: $radio-pildora;
     font-weight: 700;
     font-size: 0.8rem;
     cursor: pointer;
@@ -95,11 +96,25 @@
 
 .footer-brand {
   text-align: center;
+  font-family: $fuente-titulos;
   font-size: 6rem;
-  font-weight: 900;
-  color: $texto;
-  letter-spacing: 4px;
+  font-weight: 800;
+  color: #2c3530;
+  letter-spacing: -2px;
+  text-transform: lowercase;
   line-height: 1;
   padding-bottom: 1rem;
   user-select: none;
+}
+
+// En el celular, una sola columna
+@include hasta($movil) {
+  .footer .footer-top {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
+  }
+
+  .newsletter input {
+    min-width: 0;
+  }
 }

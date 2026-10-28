@@ -2,37 +2,39 @@
 @use '../abstractos' as *;
 
 .catalogo-section {
-  max-width: 1200px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 3rem 1.5rem 5rem;
+  padding: 4rem 2.5rem 4rem;
 }
 
+// Botones para filtrar: Todo, Mujer, Hombre...
 .categorias {
   display: flex;
-  justify-content: center;
-  gap: 0.8rem;
+  gap: 0.6rem;
   flex-wrap: wrap;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 
   button {
-    padding: 0.6rem 1.4rem;
-    border: 1px solid $gris-250;
+    min-height: 44px;
+    padding: 0.6rem 1.3rem;
+    border: 1px solid $borde-suave;
     border-radius: $radio-pildora;
     background-color: $blanco;
-    color: $gris-800;
+    color: $texto;
     cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 500;
     transition: 0.2s;
 
     &:hover {
-      border-color: $negro;
+      border-color: $texto;
     }
 
     &.activo {
       background-color: $negro;
       color: $blanco;
       border-color: $negro;
+      font-weight: 700;
     }
   }
 }

@@ -1,15 +1,13 @@
-// Beneficios
+// Beneficios: envío gratis, cambios y pago seguro
 @use '../abstractos' as *;
 
 .beneficios {
-  max-width: 1200px;
-  margin: -2rem auto 0;
-  padding: 0 1.5rem;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 2.5rem 1rem;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  position: relative;
-  z-index: 2;
+  gap: 1.2rem;
 }
 
 .beneficio {
@@ -17,27 +15,40 @@
   align-items: center;
   gap: 1rem;
   background: $blanco;
-  border-radius: $radio-lg;
-  padding: 1.1rem 1.4rem;
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.09);
+  border-radius: $radio-tarjeta;
+  padding: 1.6rem 1.8rem;
 
   svg {
     flex-shrink: 0;
-    width: 28px;
-    height: 28px;
+    box-sizing: content-box;
+    width: 24px;
+    height: 24px;
+    padding: 14px;
+    border-radius: 50%;
+    background: $salvia;
+  }
+
+  // Cada ícono con un tono distinto
+  &:nth-child(2) svg {
+    background: $tono-azul-fondo;
+  }
+
+  &:nth-child(3) svg {
+    background: $tono-verde-fondo;
   }
 
   div {
     display: flex;
     flex-direction: column;
+    gap: 0.15rem;
   }
 
   strong {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
   }
 
   span {
-    font-size: 0.82rem;
-    color: $gris-500;
+    font-size: 0.95rem;
+    color: $texto-suave;
   }
 }

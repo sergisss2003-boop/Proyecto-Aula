@@ -1,53 +1,100 @@
-// Secciones de portada
+// Secciones de portada: títulos y categorías en círculos
 @use '../abstractos' as *;
 
 .titulo-seccion {
-  text-align: center;
-  font-size: 1.7rem;
+  font-size: clamp(2rem, 3.6vw, 3rem);
   font-weight: 800;
-  margin: 0 0 1.8rem 0;
+  margin: 0 0 1.6rem 0;
 }
 
 .categorias-seccion {
-  max-width: 1200px;
+  max-width: 1360px;
   margin: 0 auto;
-  padding: 4rem 1.5rem 0;
+  padding: 3rem 2.5rem 0;
 }
 
-.categorias-tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 1rem;
+.categorias-circulos {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem 3rem;
 }
 
-.tile {
+.cat-circulo {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: 0.2rem;
-  min-height: 220px;
-  padding: 1.1rem;
-  border-radius: 14px;
-  background-color: $gris-900;
-  background-image: linear-gradient(135deg, $texto, $azul);
-  background-size: cover;
-  background-position: center;
-  color: $blanco;
+  align-items: center;
+  gap: 0.8rem;
+  color: $texto;
+  font-weight: 700;
+  font-size: 1rem;
   text-decoration: none;
-  transition: transform 0.25s, box-shadow 0.25s;
 
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+  // La foto redonda con un aro de color (como las historias de Instagram)
+  .cat-foto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 132px;
+    height: 132px;
+    padding: 4px;
+    border: 4px solid $salvia-media;
+    border-radius: 50%;
+    background: $fondo-pagina;
+    transition: transform 0.2s;
+
+    img,
+    span {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #eef0ec;
+    }
+
+    // Sin foto: la inicial de la categoría
+    span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: $fuente-titulos;
+      font-size: 2.4rem;
+    }
   }
 
-  span {
-    font-size: 1.1rem;
-    font-weight: 800;
+  &:hover .cat-foto {
+    transform: translateY(-4px) scale(1.03);
   }
 
-  small {
-    font-size: 0.8rem;
-    opacity: 0.85;
+  // Un color de aro distinto para cada categoría
+  &:nth-child(4n + 2) .cat-foto {
+    border-color: $tono-azul;
+  }
+
+  &:nth-child(4n + 3) .cat-foto {
+    border-color: $tono-verde;
+  }
+
+  &:nth-child(4n + 4) .cat-foto {
+    border-color: $tono-arena;
+  }
+
+  &.es-descuentos {
+    color: $rojo-descuento;
+
+    .cat-foto {
+      border-color: $rojo-descuento;
+    }
+  }
+}
+
+@include hasta($movil) {
+  .categorias-circulos {
+    gap: 1.2rem 1.4rem;
+  }
+
+  .cat-circulo .cat-foto {
+    width: 92px;
+    height: 92px;
   }
 }

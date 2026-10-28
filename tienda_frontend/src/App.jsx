@@ -171,10 +171,19 @@ function App() {
     ? porCategoria.filter(p => quitarTildes(`${p.nombre} ${p.descripcion}`).includes(textoBusqueda))
     : porCategoria
 
-  // Imágenes de la portada: los productos más recientes que tengan foto
+  // Imágenes de la portada: la prenda más reciente con foto de cada categoría principal
+  // (Mujer, Hombre, Accesorios). Se saltan tenis y medias para que se vea la ropa.
   const conImagen = productosActivos.filter(p => p.imagen)
-  const destacados = [...conImagen].sort((a, b) => b.id - a.id).slice(0, 3)
+  const nuevosPrimero = [...conImagen].sort((a, b) => b.id - a.id)
+  const esCalzado = (p) => /tenis|zapat|media|calcet/.test(quitarTildes(categorias.find(c => c.id === p.categoria)?.nombre ?? ''))
+  const porPrincipal = principales
+    .filter(cat => !esDescuentos(cat))
+    .map(cat => nuevosPrimero.find(p => idsDe(cat.id).includes(p.categoria) && !esCalzado(p)))
+    .filter(Boolean)
+  // Si faltan, se completa con los más recientes
+  const destacados = [...porPrincipal, ...nuevosPrimero.filter(p => !porPrincipal.includes(p))].slice(0, 3)
   const imagenDeCategoria = (catId) => productosDe(catId).find(p => p.imagen)?.imagen
+  const categoriaDescuentos = principales.find(esDescuentos)
   const imagenBanner = conImagen.length ? conImagen[conImagen.length - 1].imagen : null
 
   const elegirCategoria = (id) => {
@@ -441,10 +450,14 @@ function App() {
           <div className="hero-texto">
             <span className="hero-etiqueta">Nueva colección</span>
             <h1>Viste con actitud,<br />a tu manera.</h1>
-            <p>Ropa y accesorios para cada estilo. Descubre las últimas prendas que acaban de llegar a Studio SD.</p>
+            <p>Ropa y accesorios juveniles para cada estilo. Envío gratis desde $300.000.</p>
             <div className="hero-botones">
               <button className="hero-btn" onClick={irAlCatalogo}>Ver catálogo</button>
-              <a className="hero-btn-sec" href="#/info/envios-y-devoluciones">Envío gratis desde $300.000</a>
+              {categoriaDescuentos ? (
+                <a className="hero-btn-sec" href="#catalogo" onClick={() => elegirCategoria(categoriaDescuentos.id)}>Descuentos</a>
+              ) : (
+                <a className="hero-btn-sec" href="#/info/envios-y-devoluciones">Envíos y cambios</a>
+              )}
             </div>
           </div>
           {destacados.length > 0 && (
@@ -466,37 +479,22 @@ function App() {
         </div>
       </header>
 
-      <section className="beneficios">
-        <div className="beneficio">
-          <Icono><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.6" /><circle cx="17" cy="18" r="1.6" /></Icono>
-          <div><strong>Envío gratis</strong><span>En compras desde $300.000</span></div>
-        </div>
-        <div className="beneficio">
-          <Icono><path d="M4 12a8 8 0 0114-5.3L20 9" /><path d="M20 4v5h-5" /><path d="M20 12a8 8 0 01-14 5.3L4 15" /><path d="M4 20v-5h5" /></Icono>
-          <div><strong>Cambios en 30 días</strong><span>Sin complicaciones</span></div>
-        </div>
-        <div className="beneficio">
-          <Icono><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18" /></Icono>
-          <div><strong>Pago seguro</strong><span>Tarjeta crédito o débito</span></div>
-        </div>
-      </section>
-
       {principales.length > 0 && (
-        <section className="categorias-seccion">
-          <h2 className="titulo-seccion">Compra por categoría</h2>
-          <div className="categorias-tiles">
+        <section className="categorias-seccion" aria-label="Compra por categoría">
+          <div className="categorias-circulos">
             {principales.map(cat => {
               const img = imagenDeCategoria(cat.id)
               return (
                 <a
                   key={cat.id}
                   href="#catalogo"
-                  className="tile"
-                  style={img ? { backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.05) 60%), url("${img}")` } : undefined}
+                  className={`cat-circulo ${esDescuentos(cat) ? 'es-descuentos' : ''}`}
                   onClick={() => elegirCategoria(cat.id)}
                 >
-                  <span>{cat.nombre}</span>
-                  <small>Ver colección →</small>
+                  <span className="cat-foto">
+                    {img ? <img src={img} alt="" /> : <span aria-hidden="true">{cat.nombre.charAt(0)}</span>}
+                  </span>
+                  {cat.nombre}
                 </a>
               )
             })}
@@ -563,7 +561,9 @@ function App() {
                     </button>
                   )}
                 </div>
-                <p className="stock">Stock disponible: {prod.stock}</p>
+                <p className="stock">
+                  {tallasDe(prod).length > 0 ? tallasDe(prod).join(' · ') : `Stock disponible: ${prod.stock}`}
+                </p>
               </div>
             </div>
           ))}
@@ -580,9 +580,24 @@ function App() {
         )}
       </section>
 
+      <section className="beneficios">
+        <div className="beneficio">
+          <Icono><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.6" /><circle cx="17" cy="18" r="1.6" /></Icono>
+          <div><strong>Envío gratis</strong><span>En compras desde $300.000</span></div>
+        </div>
+        <div className="beneficio">
+          <Icono><path d="M4 12a8 8 0 0114-5.3L20 9" /><path d="M20 4v5h-5" /><path d="M20 12a8 8 0 01-14 5.3L4 15" /><path d="M4 20v-5h5" /></Icono>
+          <div><strong>Cambios en 30 días</strong><span>Sin complicaciones</span></div>
+        </div>
+        <div className="beneficio">
+          <Icono><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18" /></Icono>
+          <div><strong>Pago seguro</strong><span>Tarjeta crédito o débito</span></div>
+        </div>
+      </section>
+
       <section
         className="banner-promo"
-        style={imagenBanner ? { backgroundImage: `linear-gradient(90deg, rgba(8,8,10,0.85), rgba(8,8,10,0.45)), url("${imagenBanner}")` } : undefined}
+        style={imagenBanner ? { backgroundImage: `linear-gradient(90deg, rgba(31,38,34,0.92), rgba(31,38,34,0.55)), url("${imagenBanner}")` } : undefined}
       >
         <div>
           <h2>Tu próximo look empieza aquí</h2>

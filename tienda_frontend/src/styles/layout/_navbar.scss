@@ -8,16 +8,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 2.5rem;
-  background-color: $negro;
-  color: $blanco;
+  padding: 1rem 2.5rem;
+  background-color: rgba($fondo-pagina, 0.94);
+  backdrop-filter: blur(8px);   // el contenido se ve borroso al pasar por debajo
+  border-bottom: 1px solid rgba($borde-suave, 0.6);
+  color: $texto;
 }
 
 .logo {
   cursor: pointer;
-  font-size: 1.3rem;
+  font-family: $fuente-titulos;
+  font-size: 1.8rem;
   font-weight: 800;
-  letter-spacing: 2px;
+  letter-spacing: -0.5px;
+  text-transform: lowercase;   // "STUDIO SD" se ve como "studio sd"
 }
 
 .nav-links {
@@ -26,9 +30,14 @@
   gap: 2rem;
 
   a {
-    color: $blanco;
+    color: $texto;
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 1rem;
+    font-weight: 500;
+
+    &:hover {
+      color: $salvia-oscura;
+    }
 
     &.activo {
       text-decoration: underline;
@@ -40,7 +49,7 @@
 .nav-iconos {
   display: flex;
   align-items: center;
-  gap: 1.3rem;
+  gap: 0.6rem;
   margin-left: 0.5rem;
 }
 
@@ -48,14 +57,31 @@
   position: relative;
   display: flex;
   align-items: center;
-  background: none;
-  border: none;
-  color: $blanco;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: $blanco;
+  border: 1px solid $borde-suave;
+  color: $texto;
   cursor: pointer;
   padding: 0;
+  transition: border-color 0.2s;
 
   &:hover {
-    opacity: 0.75;
+    border-color: $texto;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  // El carrito es el único botón oscuro, para que resalte
+  &.cart-icon {
+    background: $negro;
+    border-color: $negro;
+    color: $blanco;
   }
 }
 
@@ -67,7 +93,7 @@
   height: 9px;
   border-radius: 50%;
   background: #1ec76a;
-  border: 2px solid $negro;
+  border: 2px solid $blanco;
 }
 
 .usuario-wrap {
@@ -115,27 +141,34 @@
 
 .buscador {
   position: sticky;
-  top: 66px;
+  top: 77px;
   z-index: 9;
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 0.8rem 2.5rem;
-  background: #1c1c1c;
+  background: $fondo-pagina;
+  border-bottom: 1px solid $borde-suave;
 
   input {
     flex: 1;
-    padding: 0.75rem 1.1rem;
-    border: none;
+    padding: 0.8rem 1.2rem;
+    border: 1px solid $borde-suave;
     border-radius: $radio-pildora;
+    background: $blanco;
+    font-family: inherit;
     font-size: 1rem;
     outline: none;
+
+    &:focus {
+      border-color: $salvia-oscura;
+    }
   }
 
   button {
     background: none;
     border: none;
-    color: $blanco;
+    color: $texto;
     font-size: 1.2rem;
     cursor: pointer;
   }
@@ -162,17 +195,52 @@
 
 .cart-badge {
   position: absolute;
-  top: -8px;
-  right: -12px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 9px;
-  background-color: $rojo-error;
-  color: $blanco;
+  top: -5px;
+  right: -5px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background-color: $salvia-media;
+  color: $negro;
   font-size: 0.7rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+// En el celular: logo e íconos arriba, categorías en una segunda fila
+@include hasta($movil) {
+  .navbar {
+    flex-wrap: wrap;
+    gap: 0.7rem 1.1rem;
+    padding: 0.8rem 1rem;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+  }
+
+  // "contents" hace que los hijos de .nav-links se acomoden directo en el navbar
+  .nav-links {
+    display: contents;
+  }
+
+  .nav-iconos {
+    order: 1;
+    margin-left: auto;
+    gap: 0.4rem;
+  }
+
+  .nav-item {
+    order: 2;
+    margin: 0;
+    padding: 0.2rem 0;
+  }
+
+  .buscador {
+    top: 0;
+    padding: 0.8rem 1rem;
+  }
 }

@@ -3,15 +3,28 @@
 // Cambia un valor aquí y se actualiza en toda la tienda.
 // ============================================================
 
-// --- Colores de marca ---
-$negro: #111;              // navbar, botones principales
-$texto: #1a1a1a;           // texto general
+// --- Colores de marca (paleta "salvia": unisex y fresca) ---
+$negro: #1f2622;           // casi negro verdoso: botones principales y pie de página
+$texto: #1f2622;           // texto general
+$texto-suave: #5e6a62;     // textos secundarios (cumple contraste 4.5:1 sobre blanco)
 $blanco: white;
-$fondo-pagina: #fafafa;
+$fondo-pagina: #f8f8f5;    // fondo general, blanco cálido
+$borde-suave: #dde2da;     // bordes de buscador, botones y tarjetas
 
-$azul: #2e5c8a;            // enlaces y detalles
-$azul-claro: #eaf1f8;      // fondo de productos sin foto
-$azul-claro-2: #d6e4f0;
+$salvia: #dde6d8;          // fondo del bloque principal de la portada
+$salvia-media: #9db89a;    // detalles: aro de categorías, número del carrito
+$salvia-oscura: #4f6b57;   // estado "hover" de botones y enlaces
+
+// Colores suaves para los círculos de categorías y los íconos de beneficios
+$tono-azul: #b5d0e6;
+$tono-verde: #c9e2c4;
+$tono-arena: #f0d39a;
+$tono-azul-fondo: #dceaf5;
+$tono-verde-fondo: #e2f0de;
+
+$azul: $salvia-oscura;     // (nombre antiguo, se conserva para no romper otros archivos)
+$azul-claro: #eef1ec;      // fondo de productos sin foto
+$azul-claro-2: #e2e8df;
 
 // --- Escala de grises (900 = más oscuro) ---
 $gris-900: #222;
@@ -27,7 +40,7 @@ $gris-100: #eee;
 
 // --- Estados ---
 $rojo-error: #e5484d;
-$rojo-descuento: #d62839;
+$rojo-descuento: #b23a2b;  // rojo ladrillo
 $verde-ok: #167a45;
 $verde-ok-fondo: #dcf5e7;
 
@@ -36,10 +49,15 @@ $radio-sm: 6px;
 $radio-md: 8px;
 $radio-lg: 12px;
 $radio-xl: 16px;
-$radio-pildora: 30px;      // botones en forma de cápsula
+$radio-pildora: 999px;     // botones en forma de cápsula
+$radio-tarjeta: 24px;      // tarjetas de producto y beneficios
+$radio-bloque: 36px;       // bloque grande de la portada
 
 // --- Tipografía ---
-$fuente-base: 'Segoe UI', Arial, sans-serif;
+// Las fuentes se instalan con npm (@fontsource) y se importan en main.jsx:
+// así se sirven desde nuestro propio sitio y cumplen la Content Security Policy.
+$fuente-base: 'DM Sans', 'Segoe UI', Arial, sans-serif;
+$fuente-titulos: 'Syne', 'DM Sans', sans-serif;
 
 // --- Puntos de quiebre (tamaños de pantalla) ---
 $tablet: 860px;

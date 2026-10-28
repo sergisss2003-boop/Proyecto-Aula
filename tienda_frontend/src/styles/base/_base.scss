@@ -11,3 +11,16 @@ body {
   background-color: $fondo-pagina;
   color: $texto;
 }
+
+h1,
+h2 {
+  font-family: $fuente-titulos;
+  letter-spacing: -0.02em;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}

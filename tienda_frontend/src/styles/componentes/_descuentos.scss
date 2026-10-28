@@ -54,8 +54,8 @@
   top: 0.8rem;
   left: 0.8rem;
   z-index: 1;
-  padding: 0.25rem 0.6rem;
-  border-radius: $radio-sm;
+  padding: 0.3rem 0.7rem;
+  border-radius: $radio-pildora;
   background: $rojo-descuento;
   color: $blanco;
   font-size: 0.8rem;
@@ -69,6 +69,6 @@
 }
 
 .nav-links a.nav-descuentos {
-  color: #ff5a6a;
+  color: $rojo-descuento;
   font-weight: 700;
 }
